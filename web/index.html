@@ -185,7 +185,7 @@ table.rep th:first-child,table.rep td:first-child{text-align:left}
 <div class="toast" id="toast" hidden></div>
 
 <script>
-window.__APPV='1.0.5';
+window.__APPV='1.0.6';
 window.addEventListener('error',function(e){showErr((e.message||'Error')+' · '+(e.filename||'').split('/').pop()+':'+(e.lineno||'?')+':'+(e.colno||'?'))});
 window.addEventListener('unhandledrejection',function(e){showErr('Promesa: '+((e.reason&&(e.reason.message||e.reason))||'?'))});
 function showErr(m){try{var d=document.getElementById('errbox');if(!d){d=document.createElement('div');d.id='errbox';d.style.cssText='position:fixed;left:12px;right:12px;bottom:110px;z-index:99;background:#2a0d12;color:#ffd7dc;border:1px solid #ff5d6c;border-radius:12px;padding:12px;font:12px/1.4 monospace;white-space:pre-wrap;word-break:break-word';document.body.appendChild(d)}d.textContent+='Error (v'+window.__APPV+'): '+m+'\n'}catch(_){}}
@@ -275,7 +275,7 @@ function voltPct(v){
   if(v==null) return null;
   const m=M(), tbl=CURVE[m.chem]; let c=v/m.cells;
   if(cfg.vFull){ const ref=m.chem==='lfp'?3.45:4.18; c=c*ref/(cfg.vFull/m.cells) } // calibración "recién cargada"
-  if(c<=tbl[0][0]) return 0; if(c>=tbl.at(-1)[0]) return 100;
+  if(c<=tbl[0][0]) return 0; if(c>=tbl[tbl.length-1][0]) return 100;
   for(let i=1;i<tbl.length;i++){ const [v1,p1]=tbl[i-1],[v2,p2]=tbl[i]; if(c<=v2) return p1+(p2-p1)*(c-v1)/(v2-v1) }
   return 100;
 }
@@ -366,7 +366,7 @@ function monthly(){
   for(const r of pool){
     const p=ridePpk(r); if(!p||r.km<1) continue;
     const d=new Date(r.date), k=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
-    const m = byM[k] ||= {k, label:`${MES[d.getMonth()]} ${String(d.getFullYear()).slice(2)}`, n:0, km:0, used:0, vFull:null};
+    const m = byM[k] = byM[k] || {k, label:`${MES[d.getMonth()]} ${String(d.getFullYear()).slice(2)}`, n:0, km:0, used:0, vFull:null};
     m.n++; m.km+=r.km; m.used+=r.used; if(r.vStart) m.vFull=Math.max(m.vFull??0,r.vStart);
   }
   for(const c of charges){ const d=new Date(c.date),k=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`; if(byM[k]) byM[k].vFull=Math.max(byM[k].vFull??0,c.v) }
@@ -736,7 +736,7 @@ function vBattery(){
 function vReport(){
   const {months}=monthly();
   if(months.length<2) return `<section class="panel wide"><h3>Informe mensual de la batería</h3><div class="empty">Hacen falta salidas de al menos dos meses distintos. Cada salida guarda cuántos km te da cada 10 % de batería, y aquí verás si esa cifra baja con el tiempo.</div></section>`;
-  const last=months.at(-1), drop=100-(last.health??100);
+  const last=months[months.length-1], drop=100-(last.health??100);
   const verdict = drop>20?['crit','Degradación notable',`Una carga completa te da un ${fmt(drop)} % menos de km que en ${months[0].label}. Revisa celdas y conexiones, y no apures por debajo del ${cfg.alert1} %.`]
     : drop>8?['warn','Desgaste moderado',`Pierdes un ${fmt(drop)} % de autonomía desde ${months[0].label}. Es normal en una batería de esta edad; carga después de cada salida y guárdala a media carga si no la usas.`]
     : ['ok','Estable',`La autonomía se mantiene (${drop>0?'-':'+'}${fmt(Math.abs(drop),1)} % desde ${months[0].label}).`];
@@ -902,7 +902,7 @@ function drawTrack(){
   const s=Math.min((W-60)/((mxO-mnO)||1e-5),(H-60)/((mxA-mnA)||1e-5));
   const X=p=>30+(p[1]-mnO)*s,Y=p=>H-30-(p[0]-mnA)*s;
   g.strokeStyle='#4fd6ff';g.lineWidth=4;g.shadowColor='#4fd6ff';g.shadowBlur=10;g.beginPath();t.forEach((p,i)=>i?g.lineTo(X(p),Y(p)):g.moveTo(X(p),Y(p)));g.stroke();g.shadowBlur=0;
-  g.fillStyle='#3ee0a1';g.beginPath();g.arc(X(t[0]),Y(t[0]),7,0,7);g.fill();g.fillStyle='#e7eef6';g.beginPath();g.arc(X(t.at(-1)),Y(t.at(-1)),7,0,7);g.fill();
+  g.fillStyle='#3ee0a1';g.beginPath();g.arc(X(t[0]),Y(t[0]),7,0,7);g.fill();g.fillStyle='#e7eef6';g.beginPath();g.arc(X(t[t.length-1]),Y(t[t.length-1]),7,0,7);g.fill();
 }
 
 /* ---------- render + events ---------- */
