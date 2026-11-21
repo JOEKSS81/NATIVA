@@ -185,12 +185,14 @@ table.rep th:first-child,table.rep td:first-child{text-align:left}
 <div class="toast" id="toast" hidden></div>
 
 <script>
-window.__APPV='1.0.6';
-window.addEventListener('error',function(e){showErr((e.message||'Error')+' · '+(e.filename||'').split('/').pop()+':'+(e.lineno||'?')+':'+(e.colno||'?'))});
+window.__APPV='1.0.7';
+window.addEventListener('error',function(e){if(e.message==='Script error.'&&!e.filename)return;showErr((e.message||'Error')+' · '+(e.filename||'').split('/').pop()+':'+(e.lineno||'?')+':'+(e.colno||'?'))});
 window.addEventListener('unhandledrejection',function(e){showErr('Promesa: '+((e.reason&&(e.reason.message||e.reason))||'?'))});
 function showErr(m){try{var d=document.getElementById('errbox');if(!d){d=document.createElement('div');d.id='errbox';d.style.cssText='position:fixed;left:12px;right:12px;bottom:110px;z-index:99;background:#2a0d12;color:#ffd7dc;border:1px solid #ff5d6c;border-radius:12px;padding:12px;font:12px/1.4 monospace;white-space:pre-wrap;word-break:break-word';document.body.appendChild(d)}d.textContent+='Error (v'+window.__APPV+'): '+m+'\n'}catch(_){}}
 </script>
 <script>
+try{
+
 /* ============================================================
    Jandri · lectura BLE de tablas Onewheel (Web Bluetooth)
    ============================================================ */
@@ -949,6 +951,8 @@ function exportCSV(){
 setInterval(()=>{if(route==='ride'&&S.link!=='off')paint()},1000);
 if('serviceWorker' in navigator && location.protocol==='https:' && !location.hostname.endsWith('claude.ai')){navigator.serviceWorker.register('sw.js').catch(()=>{})}
 try{ go() }catch(e){ showErr((e&&e.message)||String(e)) }
+
+}catch(e){ showErr('Arranque: '+((e&&e.message)||e)+(e&&e.line?' (línea '+e.line+')':'')+(e&&e.stack?'\n'+String(e.stack).split('\n').slice(0,3).join('\n'):'')) }
 </script>
 
 </body>
