@@ -1,0 +1,45 @@
+plugins { id 'com.android.application' }
+
+// URL de la web (Vercel). Se puede cambiar con -PwebHost=otro.dominio
+def webHost = project.findProperty('webHost') ?: 'volta-board.vercel.app'
+def vCode = (System.getenv('GITHUB_RUN_NUMBER') ?: '1') as int
+
+android {
+    namespace 'com.voltaboard.app'
+    compileSdk 34
+    defaultConfig {
+        applicationId 'com.voltaboard.app'
+        minSdk 23
+        targetSdk 34
+        versionCode vCode
+        versionName "1.0.${vCode}"
+        resValue 'string', 'appName', 'Volta Board'
+        resValue 'string', 'launchUrl', "https://${webHost}/"
+        resValue 'string', 'webHost', webHost
+        resValue 'string', 'assetStatements',
+            "[{ \\\"relation\\\": [\\\"delegate_permission/common.handle_all_urls\\\"], \\\"target\\\": {\\\"namespace\\\": \\\"web\\\", \\\"site\\\": \\\"https://${webHost}\\\"}}]"
+        manifestPlaceholders = [webHost: webHost]
+    }
+    signingConfigs {
+        release {
+            storeFile file(System.getenv('KS_PATH') ?: '../volta.keystore')
+            storePassword System.getenv('KS_PASS')
+            keyAlias 'volta'
+            keyPassword System.getenv('KS_PASS')
+        }
+    }
+    buildTypes {
+        release {
+            minifyEnabled false
+            signingConfig signingConfigs.release
+        }
+    }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+}
+
+dependencies {
+    implementation 'com.google.androidbrowserhelper:androidbrowserhelper:2.5.0'
+}
