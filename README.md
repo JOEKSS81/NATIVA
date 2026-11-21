@@ -4,7 +4,7 @@ App para Onewheel, pensada para el **V1 original** con el BMS sin comunicar:
 porcentaje de batería estimado por el voltaje, aviso por voz y vibración cada 10 %,
 alarma de voltaje bajo, autonomía según tu gasto real e informe mensual de la batería.
 
-- **Web**: carpeta `web/`, publicada en Netlify (https://jandri.netlify.app).
+- **Web**: carpeta `web/`, publicada en GitHub Pages (https://joekss81.github.io/NATIVA/).
 - **APK**: carpeta `android/` (Trusted Web Activity). GitHub Actions lo compila en cada cambio
   y lo deja en **Releases** → [descargar el último APK](../../releases/latest/download/Jandri.apk).
 

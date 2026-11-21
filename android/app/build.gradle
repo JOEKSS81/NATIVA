@@ -1,7 +1,8 @@
 plugins { id 'com.android.application' }
 
-// URL de la web (Vercel). Se puede cambiar con -PwebHost=otro.dominio
-def webHost = project.findProperty('webHost') ?: 'jandri.netlify.app'
+// URL de la web (GitHub Pages). Se puede cambiar con -PwebUrl=https://otro.dominio/
+def webUrl = project.findProperty('webUrl') ?: 'https://joekss81.github.io/NATIVA/'
+def webHost = new URI(webUrl).host
 def vCode = (System.getenv('GITHUB_RUN_NUMBER') ?: '1') as int
 
 android {
@@ -14,7 +15,7 @@ android {
         versionCode vCode
         versionName "1.0.${vCode}"
         resValue 'string', 'appName', 'Jandri'
-        resValue 'string', 'launchUrl', "https://${webHost}/"
+        resValue 'string', 'launchUrl', webUrl
         resValue 'string', 'webHost', webHost
         resValue 'string', 'assetStatements',
             "[{ \\\"relation\\\": [\\\"delegate_permission/common.handle_all_urls\\\"], \\\"target\\\": {\\\"namespace\\\": \\\"web\\\", \\\"site\\\": \\\"https://${webHost}\\\"}}]"
