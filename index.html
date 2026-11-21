@@ -1,0 +1,959 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icon-192.png">
+<style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
+<title>Jandri</title>
+<meta name="theme-color" content="#06080c">
+<link rel="manifest" href="manifest.json">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: HUD de una columna para móvil, cabecera fija + vistas por pestaña + barra inferior. Diseño oscuro único (cabina nocturna). */
+:root{
+  color-scheme:dark;
+  --bg:#06080c; --panel:#0c1118; --panel2:#111823; --line:#1b2532; --line2:#263344;
+  --fg:#e7eef6; --muted:#7f8ea2; --dim:#4c5a6c;
+  --ion:#4fd6ff; --ion-soft:rgba(79,214,255,.14); --plasma:#9b8cff;
+  --ok:#3ee0a1; --warn:#ffb547; --crit:#ff5d6c;
+  --f-display:"Chakra Petch",system-ui,sans-serif;
+  --f-body:"IBM Plex Sans",system-ui,sans-serif;
+  --f-mono:"JetBrains Mono",ui-monospace,monospace;
+  --r:14px;
+}
+html,body{height:100%}
+body{background:var(--bg);color:var(--fg);font-family:var(--f-body);font-size:15px;line-height:1.45;-webkit-tap-highlight-color:transparent;overflow-x:hidden}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:30;background:var(--bg)}
+body::after{content:"";position:fixed;inset:0;pointer-events:none;z-index:0;
+  background:radial-gradient(60% 40% at 50% 0%,rgba(79,214,255,.08),transparent 70%),
+  repeating-linear-gradient(0deg,transparent 0 3px,rgba(255,255,255,.012) 3px 4px)}
+*{box-sizing:border-box}
+button{font:inherit;color:inherit;cursor:pointer}
+:focus-visible{outline:2px solid var(--ion);outline-offset:2px}
+.wrap{position:relative;z-index:1;max-width:560px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:0 110px}
+
+/* header */
+header{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:linear-gradient(var(--bg) 75%,transparent);padding-block:14px 12px;display:flex;align-items:center;gap:12px}
+.logo{font-family:var(--f-display);font-weight:700;letter-spacing:.14em;font-size:15px;text-transform:uppercase;display:flex;align-items:center;gap:8px}
+.logo i{width:22px;height:22px;border-radius:50%;border:2px solid var(--ion);box-shadow:0 0 12px var(--ion);display:inline-block;position:relative}
+.logo i::after{content:"";position:absolute;inset:4px;border-radius:50%;background:var(--ion)}
+.conn{margin-left:auto;display:flex;align-items:center;gap:8px;font-family:var(--f-mono);font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--dim)}
+.dot.on{background:var(--ok);box-shadow:0 0 10px var(--ok)}
+.btn{border:1px solid var(--line2);background:var(--panel2);border-radius:999px;padding:9px 16px;font-weight:600;font-size:13px;display:inline-flex;align-items:center;gap:8px}
+.btn.primary{background:var(--ion);color:#021018;border-color:var(--ion);box-shadow:0 0 24px rgba(79,214,255,.35)}
+.btn.ghost{background:transparent}
+.btn:active{transform:scale(.97)}
+
+/* views */
+.view{display:grid;gap:14px;animation:in .35s ease}
+@keyframes in{from{opacity:.4;transform:translateY(6px)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+.panel{background:linear-gradient(180deg,var(--panel2),var(--panel));border:1px solid var(--line);border-radius:var(--r);padding:16px;position:relative;overflow:hidden}
+.panel h3{margin:0 0 12px;font-family:var(--f-display);font-weight:600;font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);display:flex;align-items:center;gap:8px}
+.panel h3 .tag{margin-left:auto;letter-spacing:.06em}
+.tag{font-family:var(--f-mono);font-size:10px;padding:3px 8px;border-radius:999px;border:1px solid var(--line2);color:var(--muted);text-transform:uppercase}
+.tag.ok{color:var(--ok);border-color:rgba(62,224,161,.4)} .tag.warn{color:var(--warn);border-color:rgba(255,181,71,.4)} .tag.crit{color:var(--crit);border-color:rgba(255,93,108,.45)}
+.mono{font-family:var(--f-mono);font-variant-numeric:tabular-nums}
+.muted{color:var(--muted)}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.stat{background:rgba(255,255,255,.02);border:1px solid var(--line);border-radius:12px;padding:12px;min-width:0}
+.stat .k{font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+.stat .v{font-family:var(--f-display);font-size:24px;font-weight:600;line-height:1.15;margin-top:4px;font-variant-numeric:tabular-nums}
+.stat .v small{font-family:var(--f-body);font-size:12px;color:var(--muted);font-weight:500;margin-left:3px}
+
+/* hero ring */
+.hero{display:grid;place-items:center;padding:22px 16px 18px}
+.ring{position:relative;width:min(78vw,300px,46vh);aspect-ratio:1;max-width:100%}
+.ring svg{width:100%;height:100%;transform:rotate(135deg);pointer-events:none}
+.ring .center{pointer-events:none}
+.ring .center{position:absolute;inset:0;display:grid;place-content:center;text-align:center}
+.pct{font-family:var(--f-display);font-weight:700;font-size:clamp(56px,17vw,84px);line-height:1;letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+.pct sup{font-size:.35em;color:var(--muted);vertical-align:top;margin-left:2px}
+.sub{font-family:var(--f-mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin-top:6px}
+.range{margin-top:10px;font-size:13px;color:var(--fg)}
+.rsrc{display:block;font-family:var(--f-mono);font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-top:3px}
+.range b{font-family:var(--f-display);font-size:18px;color:var(--ion)}
+.boardname{font-family:var(--f-display);font-size:13px;letter-spacing:.2em;text-transform:uppercase;color:var(--muted);margin-bottom:8px}
+.cta-row{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin-top:16px}
+
+/* bars */
+.bar{height:8px;border-radius:999px;background:var(--line);overflow:hidden}
+.bar>i{display:block;height:100%;border-radius:inherit;background:linear-gradient(90deg,var(--ion),var(--plasma))}
+.cells{display:grid;grid-template-columns:repeat(auto-fill,minmax(42px,1fr));gap:6px}
+.cell{border:1px solid var(--line2);border-radius:8px;padding:6px 4px;text-align:center;font-family:var(--f-mono);font-size:10.5px;color:var(--muted)}
+.cell b{display:block;color:var(--fg);font-size:12px}
+
+/* speed gauge */
+.gauge{display:grid;place-items:center;padding-top:6px}
+.gauge canvas{width:100%;max-width:340px;aspect-ratio:2/1.15}
+.speedv{font-family:var(--f-display);font-size:64px;font-weight:700;line-height:1;margin-top:-70px;font-variant-numeric:tabular-nums}
+.speedu{font-family:var(--f-mono);font-size:11px;color:var(--muted);letter-spacing:.14em;text-transform:uppercase}
+.headroom{margin-top:14px;width:100%}
+.horizon{width:100%;aspect-ratio:3/1;max-height:120px;border-radius:12px;border:1px solid var(--line);background:var(--panel)}
+
+/* lists */
+.list{display:grid;gap:8px}
+.row{display:flex;align-items:center;gap:12px;padding:12px;border:1px solid var(--line);border-radius:12px;background:rgba(255,255,255,.015)}
+.row .meta{min-width:0;flex:1}
+.row .t{font-weight:600}
+.row .s{font-size:12px;color:var(--muted)}
+.ico{width:34px;height:34px;flex:none;border-radius:10px;display:grid;place-items:center;background:var(--ion-soft);color:var(--ion)}
+.ico svg{width:18px;height:18px}
+.chips{display:flex;gap:8px;flex-wrap:wrap}
+.chip{border:1px solid var(--line2);border-radius:999px;padding:7px 12px;font-size:12.5px;background:transparent}
+.chip[aria-pressed="true"]{border-color:var(--ion);color:var(--ion);background:var(--ion-soft)}
+.badge{display:grid;place-items:center;text-align:center;gap:4px;padding:12px 6px;border:1px solid var(--line);border-radius:12px;font-size:11px;color:var(--muted)}
+.badge .b{width:38px;height:38px;border-radius:50%;display:grid;place-items:center;border:1px dashed var(--dim);font-family:var(--f-display);font-size:13px}
+.badge.got{color:var(--fg)} .badge.got .b{border:1px solid var(--ion);color:var(--ion);box-shadow:0 0 14px rgba(79,214,255,.3)}
+
+/* form */
+label.f{display:grid;gap:6px;font-size:12px;color:var(--muted)}
+select,input[type=number],input[type=text]{background:var(--bg);border:1px solid var(--line2);color:var(--fg);border-radius:10px;padding:10px 12px;font:inherit;width:100%}
+input[type=range]{width:100%;accent-color:var(--ion)}
+.switch{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 0;border-bottom:1px solid var(--line)}
+.switch:last-child{border-bottom:0}
+.switch input{appearance:none;width:44px;height:26px;border-radius:999px;background:var(--line2);position:relative;flex:none;cursor:pointer;transition:.2s}
+.switch input::after{content:"";position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:var(--fg);transition:.2s}
+.switch input:checked{background:var(--ion)} .switch input:checked::after{left:21px;background:#021018}
+.switch .s{font-size:12px;color:var(--muted)}
+
+/* chart */
+svg.chart{width:100%;height:140px;display:block}
+.chart text{fill:var(--muted);font-family:var(--f-mono);font-size:9px}
+
+/* tabbar */
+nav.tabs{position:fixed;left:0;right:0;bottom:0;z-index:25;padding:8px max(12px,env(safe-area-inset-right,0px)) calc(10px + env(safe-area-inset-bottom,0px)) max(12px,env(safe-area-inset-left,0px));background:linear-gradient(transparent,var(--bg) 30%)}
+nav.tabs .in{max-width:560px;margin:0 auto;display:grid;grid-template-columns:repeat(5,1fr);background:rgba(12,17,24,.92);backdrop-filter:blur(14px);border:1px solid var(--line2);border-radius:20px;padding:6px}
+nav.tabs a{display:grid;place-items:center;gap:3px;padding:8px 0;border-radius:14px;color:var(--muted);text-decoration:none;font-size:10.5px;letter-spacing:.04em}
+nav.tabs a svg{width:21px;height:21px}
+nav.tabs a[aria-current="page"]{color:var(--ion);background:var(--ion-soft)}
+
+/* toast / sheet */
+.toast{position:fixed;left:50%;top:calc(70px + env(safe-area-inset-top,0px));transform:translateX(-50%);z-index:40;max-width:min(92vw,460px);background:var(--panel2);border:1px solid var(--line2);border-left:3px solid var(--ion);border-radius:12px;padding:12px 14px;font-size:13.5px;box-shadow:0 10px 40px rgba(0,0,0,.6)}
+.toast.warn{border-left-color:var(--warn)} .toast.crit{border-left-color:var(--crit)}
+.note{font-size:12.5px;color:var(--muted);line-height:1.5}
+.note code{font-family:var(--f-mono);font-size:11.5px;color:var(--fg)}
+.empty{text-align:center;padding:22px 10px;color:var(--muted);font-size:13px}
+canvas#track{width:100%;aspect-ratio:16/10;border-radius:12px;border:1px solid var(--line);background:
+  linear-gradient(var(--line) 1px,transparent 1px) 0 0/28px 28px,linear-gradient(90deg,var(--line) 1px,transparent 1px) 0 0/28px 28px,var(--panel);display:block}
+table.rep{width:100%;border-collapse:collapse;font-size:12.5px;font-variant-numeric:tabular-nums;min-width:420px}
+table.rep th{font-weight:500;color:var(--muted);text-align:right;font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;padding:6px 6px;border-bottom:1px solid var(--line2)}
+table.rep td{text-align:right;padding:8px 6px;border-bottom:1px solid var(--line)}
+table.rep th:first-child,table.rep td:first-child{text-align:left}
+/* Pantallas anchas (tablet o móvil en horizontal): dos columnas */
+@media (min-width:720px){
+  .wrap{max-width:1100px}
+  .view{grid-template-columns:repeat(2,minmax(0,1fr));align-items:start}
+  .view>.wide,.view>.hero{grid-row:span 2}
+  nav.tabs .in{max-width:640px}
+}
+@media (min-width:1100px){.view{grid-template-columns:repeat(3,minmax(0,1fr))}}
+/* Móvil girado: poca altura → todo más compacto y barra lateral */
+@media (orientation:landscape) and (max-height:520px){
+  .wrap{max-width:none;padding-left:calc(96px + env(safe-area-inset-left,0px));padding-block:0 16px}
+  header{padding-block:8px 6px}
+  .view{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+  .hero{padding:12px}
+  .ring{width:min(52vh,240px)}
+  .pct{font-size:clamp(40px,11vh,64px)}
+  .cta-row{margin-top:8px}
+  .gauge canvas{max-width:300px}
+  .speedv{font-size:48px;margin-top:-56px}
+  nav.tabs{left:0;top:0;bottom:0;right:auto;width:calc(88px + env(safe-area-inset-left,0px));padding:calc(8px + env(safe-area-inset-top,0px)) 8px calc(8px + env(safe-area-inset-bottom,0px)) max(8px,env(safe-area-inset-left,0px));background:none;display:flex;align-items:center}
+  nav.tabs .in{grid-template-columns:1fr;grid-auto-rows:1fr;width:100%;height:100%;max-height:420px}
+  .toast{top:calc(12px + env(safe-area-inset-top,0px))}
+}
+@media (max-width:380px){.grid3{grid-template-columns:1fr 1fr}.stat .v{font-size:20px}}
+</style>
+
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="logo"><i></i>Jandri</div>
+    <div class="conn"><span class="dot" id="dot"></span><span id="connTxt">Sin conexión</span></div>
+  </header>
+  <main id="app"></main>
+</div>
+
+<nav class="tabs" aria-label="Secciones"><div class="in" id="tabs"></div></nav>
+<div class="toast" id="toast" hidden></div>
+
+<script>
+window.__APPV='1.0.7';
+window.addEventListener('error',function(e){if(e.message==='Script error.'&&!e.filename)return;showErr((e.message||'Error')+' · '+(e.filename||'').split('/').pop()+':'+(e.lineno||'?')+':'+(e.colno||'?'))});
+window.addEventListener('unhandledrejection',function(e){showErr('Promesa: '+((e.reason&&(e.reason.message||e.reason))||'?'))});
+function showErr(m){try{var d=document.getElementById('errbox');if(!d){d=document.createElement('div');d.id='errbox';d.style.cssText='position:fixed;left:12px;right:12px;bottom:110px;z-index:99;background:#2a0d12;color:#ffd7dc;border:1px solid #ff5d6c;border-radius:12px;padding:12px;font:12px/1.4 monospace;white-space:pre-wrap;word-break:break-word';document.body.appendChild(d)}d.textContent+='Error (v'+window.__APPV+'): '+m+'\n'}catch(_){}}
+</script>
+<script>
+try{
+
+/* ============================================================
+   Jandri · lectura BLE de tablas Onewheel (Web Bluetooth)
+   ============================================================ */
+const UUID = id => `e659${id}-ea98-11e3-ac10-0800200c9a66`;
+const SVC = UUID('f300');
+const CH = {
+  serial:'f301', mode:'f302', battery:'f303', batLow5:'f304', batLow20:'f305', batSerial:'f306',
+  pitch:'f307', roll:'f308', yaw:'f309', tripOdo:'f30a', rpm:'f30b', lightMode:'f30c',
+  status:'f30f', temp:'f310', firmware:'f311', current:'f312', tripAh:'f313', tripRegen:'f314',
+  batTemp:'f315', voltage:'f316', headroom:'f317', hardware:'f318', lifeOdo:'f319', lifeAh:'f31a',
+  cells:'f31b', lastError:'f31d', uartRead:'f3fe', uartWrite:'f3ff'
+};
+const MODELS = {
+  v1:    {name:'V1 (original)', chem:'lfp', cells:16, wh:130, rangeKm:[6,10],  vMin:46.4, vMax:58.4, circ:0.9177, chargeMin:{std:25,  fast:20}},
+  plus:  {name:'Plus',   chem:'lfp', cells:16, wh:130, rangeKm:[8,11],  vMin:46.4, vMax:58.4, circ:0.9177, chargeMin:{std:25,  fast:20}},
+  pint:  {name:'Pint',   chem:'li', cells:15, wh:148, rangeKm:[10,13], vMin:48.0, vMax:63.0, circ:0.9177, chargeMin:{std:110, fast:60}},
+  pintx: {name:'Pint X', chem:'li', cells:15, wh:324, rangeKm:[19,29], vMin:48.0, vMax:63.0, circ:0.9177, chargeMin:{std:180, fast:90}},
+  xr:    {name:'XR',     chem:'li', cells:15, wh:324, rangeKm:[19,29], vMin:48.0, vMax:63.0, circ:0.9177, chargeMin:{std:110, fast:60}},
+  gt:    {name:'GT',     chem:'li', cells:18, wh:702, rangeKm:[32,51], vMin:57.6, vMax:75.6, circ:0.9177, chargeMin:{std:200, fast:110}},
+};
+/* Curvas voltaje en reposo por celda → % (LiFePO4 es muy plana entre 3,26 y 3,34 V) */
+const CURVE = {
+  lfp:[[2.90,0],[3.00,5],[3.13,10],[3.20,18],[3.24,28],[3.27,40],[3.29,55],[3.31,70],[3.33,84],[3.35,92],[3.40,97],[3.50,99],[3.60,100]],
+  li: [[3.00,0],[3.30,5],[3.50,15],[3.60,30],[3.70,45],[3.80,60],[3.90,72],[4.00,83],[4.10,93],[4.20,100]]
+};
+const MODE_NAMES = {1:'Classic',2:'Extreme',3:'Elevated',4:'Sequoia',5:'Cruz',6:'Mission',7:'Elevated',8:'Delirium',9:'Custom'};
+
+/* ---------- state ---------- */
+const store = {
+  get(k,d){try{const v=localStorage.getItem('jandri.'+k);return v?JSON.parse(v):d}catch{return d}},
+  set(k,v){try{localStorage.setItem('jandri.'+k,JSON.stringify(v))}catch{}}
+};
+const S = {
+  link:'off',            // off | ble
+  battery:null, voltage:null, rpm:0, speed:0, maxSpeed:0, tempMotor:null, tempCtrl:null, batTemp:null,
+  current:null, pitch:0, roll:0, tripKm:0, lifeKm:null, mode:null, firmware:null, hardware:null,
+  serial:null, lights:null, headroom:null, cellsV:[], startBattery:null, startTime:null,
+  batHist:[], speedHist:[], track:[], alertsFired:{},
+  bmsRaw:null, pctEst:null, src:null, lastStep:null
+};
+const cfg = Object.assign({
+  model:'v1', units:'km', alert1:20, alert2:10, speedAlert:20, notify:true, vibrate:true,
+  voice:true, voiceURI:'', beep:false, vLow:46.4, vFull:null, autoReconnect:true,
+  wakeLock:true, autoRecord:true, gps:false, charger:'std', chargeTarget:100,
+  tirePsi:20, tireCheckKm:150, lastTireKm:0, serviceKm:0
+}, store.get('cfg',{}));
+let rides = store.get('rides', null);
+if(!Array.isArray(rides)) rides=[];
+rides=rides.filter(r=>!r.demo);
+let charges = store.get('charges',[]); // voltajes guardados con «Recién cargada»
+const saveCfg=()=>store.set('cfg',cfg);
+const M = ()=>MODELS[cfg.model];
+const isMi = ()=>cfg.units==='mi';
+const dist = km => isMi()? km*0.621371 : km;
+const dU = ()=> isMi()?'mi':'km';
+const sU = ()=> isMi()?'mph':'km/h';
+
+/* ---------- utils ---------- */
+const $ = s=>document.querySelector(s);
+const isIOS = /iPhone|iPad|iPod/.test(navigator.userAgent) || (navigator.platform==='MacIntel' && navigator.maxTouchPoints>1);
+const inFrame = (()=>{try{return window.self!==window.top}catch{return true}})();
+const fmt = (v,d=0)=> v==null||isNaN(v)?'—':Number(v).toFixed(d);
+function toast(msg,kind=''){const t=$('#toast');t.className='toast '+kind;t.textContent=msg;t.hidden=false;clearTimeout(toast._t);toast._t=setTimeout(()=>t.hidden=true,3800)}
+const ICON = {
+  home:'<path d="M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/>',
+  ride:'<circle cx="12" cy="12" r="9"/><path d="M12 12l5-3"/><path d="M12 3v2M3 12h2M19 12h2"/>',
+  bat:'<rect x="3" y="7" width="16" height="10" rx="2"/><path d="M21 10v4"/><path d="M7 10v4M11 10v4"/>',
+  log:'<path d="M4 19V5M4 19h16"/><path d="M8 15l3-4 3 2 5-6"/>',
+  set:'<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/>',
+  bolt:'<path d="M13 2L4 14h7l-1 8 9-12h-7z"/>',
+  temp:'<path d="M14 14.8V4a2 2 0 1 0-4 0v10.8a4 4 0 1 0 4 0z"/>',
+  light:'<path d="M9 18h6M10 22h4"/><path d="M12 2a7 7 0 0 0-4 12.7V17h8v-2.3A7 7 0 0 0 12 2z"/>',
+  tire:'<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4"/>',
+  bell:'<path d="M6 8a6 6 0 1 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.9 1.9 0 0 0 3.4 0"/>',
+  bt:'<path d="M7 7l10 10-5 5V2l5 5L7 17"/>',
+  wrench:'<path d="M14.7 6.3a4 4 0 0 0-5.4 5.4L3 18l3 3 6.3-6.3a4 4 0 0 0 5.4-5.4l-2.5 2.5-2.4-.6-.6-2.4z"/>'
+};
+const ic = (n,extra='')=>`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" ${extra}>${ICON[n]}</svg>`;
+function batColor(p){return p==null?'var(--dim)':p<=cfg.alert2?'var(--crit)':p<=cfg.alert1?'var(--warn)':'var(--ion)'}
+/* ---------- porcentaje estimado por voltaje ---------- */
+function voltPct(v){
+  if(v==null) return null;
+  const m=M(), tbl=CURVE[m.chem]; let c=v/m.cells;
+  if(cfg.vFull){ const ref=m.chem==='lfp'?3.45:4.18; c=c*ref/(cfg.vFull/m.cells) } // calibración "recién cargada"
+  if(c<=tbl[0][0]) return 0; if(c>=tbl[tbl.length-1][0]) return 100;
+  for(let i=1;i<tbl.length;i++){ const [v1,p1]=tbl[i-1],[v2,p2]=tbl[i]; if(c<=v2) return p1+(p2-p1)*(c-v1)/(v2-v1) }
+  return 100;
+}
+let vBuf=[];
+function computeBattery(){
+  if(S.voltage!=null){
+    vBuf.push(S.voltage); if(vBuf.length>15) vBuf.shift();
+    const raw=voltPct(Math.max(...vBuf));          // el máximo reciente ignora las caídas al acelerar
+    if(S.pctEst==null||raw<S.pctEst||raw>S.pctEst+4) S.pctEst=raw; // solo baja, salvo si está cargando
+  }
+  const bmsOk = (S.bmsRaw>0) || (S.batTemp>0);
+  S.src = bmsOk?'bms':(S.pctEst!=null?'volt':null);
+  S.battery = bmsOk? S.bmsRaw : S.pctEst;
+}
+const approx = ()=> S.src==='volt'?'~':'';
+
+/* ---------- voz, pitidos y vibración ---------- */
+let actx=null;
+function audioUnlock(){ try{ actx=actx||new (window.AudioContext||window.webkitAudioContext)(); actx.resume() }catch{} }
+function beep(n=1,freq=880,dur=.16){ audioUnlock(); if(!actx) return;
+  for(let i=0;i<n;i++){ const t=actx.currentTime+i*(dur+.12),o=actx.createOscillator(),g=actx.createGain();
+    o.frequency.value=freq; o.type='square'; g.gain.setValueAtTime(.0001,t); g.gain.exponentialRampToValueAtTime(.25,t+.01); g.gain.exponentialRampToValueAtTime(.0001,t+dur);
+    o.connect(g).connect(actx.destination); o.start(t); o.stop(t+dur+.02) } }
+function alarm(){ audioUnlock(); if(!actx) return; for(let i=0;i<6;i++) setTimeout(()=>beep(1,i%2?660:990,.22),i*260) }
+let voices=[];
+function loadVoices(){ try{ voices=speechSynthesis.getVoices().filter(v=>/^es([-_]|$)/i.test(v.lang)) }catch{ voices=[] } }
+if('speechSynthesis' in window){ loadVoices(); speechSynthesis.addEventListener?.('voiceschanged',()=>{loadVoices(); if(route==='prefs') render()}) }
+function pickVoice(){
+  if(!voices.length) loadVoices();
+  const norm=l=>l.replace('_','-').toLowerCase();
+  return voices.find(v=>v.voiceURI===cfg.voiceURI)
+      || voices.find(v=>norm(v.lang)==='es-es' && /google/i.test(v.name))
+      || voices.find(v=>norm(v.lang)==='es-es')
+      || voices.find(v=>norm(v.lang)==='es-us')
+      || voices[0] || null;
+}
+function speak(txt,force){
+  if((!cfg.voice&&!force)||!('speechSynthesis' in window)) return;
+  try{
+    const u=new SpeechSynthesisUtterance(txt), v=pickVoice();
+    if(v){ u.voice=v; u.lang=v.lang } else { u.lang='es-ES'; if(force) toast('No hay voz en español instalada en el móvil. Mira Ajustes › Aviso por voz.','warn') }
+    u.rate=1.0; u.pitch=1; u.volume=1; speechSynthesis.speak(u);
+  }catch{}
+}
+function vib(p){ if(cfg.vibrate&&navigator.vibrate) navigator.vibrate(p) }
+function announce(level){
+  const crit=level<=cfg.alert2, low=level<=cfg.alert1;
+  speak(crit?`Batería ${level} por ciento. Para pronto.`:`Batería ${level} por ciento`);
+  vib(crit?[400,150,400,150,400]:low?[200,120,200]:[220]);
+  if(crit) alarm(); else if(cfg.beep) beep(low?2:1);
+  toast(`${approx()}${level} % de batería${crit?' · crítica':''}`, crit?'crit':low?'warn':'');
+  notify(`Batería ${approx()}${level} %`,'bat');
+}
+
+/* ---------- autonomía con tu gasto real (% de batería por km) ---------- */
+const ridePpk = r => r.ppk ?? (r.km>0 ? r.used/r.km : null);
+function consumption(){
+  let pool = rides.filter(r=>r.km>=1 && r.used>0);
+  let src = 'real';
+  pool = pool.slice(0,8); // las 8 más recientes, ponderadas por km y por antigüedad
+  let w=0, s=0;
+  pool.forEach((r,i)=>{ const wt=r.km*Math.pow(0.85,i); w+=wt; s+=ridePpk(r)*wt });
+  const liveUsed = S.startBattery!=null&&S.battery!=null ? S.startBattery-S.battery : 0;
+  if(S.tripKm>=1 && liveUsed>1){ const wt=S.tripKm*1.5; w+=wt; s+=liveUsed/S.tripKm*wt; src = pool.length?src+'+live':'live' }
+  if(!w) return null;
+  return {ppk:s/w, n:pool.length, src};
+}
+let rangeInfo = 'fábrica';
+function rangeLeft(){
+  if(S.battery==null) return null;
+  const c = consumption();
+  if(c && c.ppk>0){
+    const avg = S.battery/c.ppk;
+    rangeInfo = c.src.startsWith('live') ? 'según esta salida'
+      : `según ${c.n} salida${c.n>1?'s':''}${c.src.includes('live')?' y la actual':''}`;
+    return [avg*0.85, avg*1.15, avg];
+  }
+  rangeInfo = 'dato de fábrica';
+  const [lo,hi]=M().rangeKm;
+  return [lo*(S.battery/100),hi*(S.battery/100),(lo+hi)/2*(S.battery/100)];
+}
+
+/* ---------- informe mensual de salud de la batería ---------- */
+const MES=['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
+function monthly(){
+  const pool = rides;
+  const byM = {};
+  for(const r of pool){
+    const p=ridePpk(r); if(!p||r.km<1) continue;
+    const d=new Date(r.date), k=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+    const m = byM[k] = byM[k] || {k, label:`${MES[d.getMonth()]} ${String(d.getFullYear()).slice(2)}`, n:0, km:0, used:0, vFull:null};
+    m.n++; m.km+=r.km; m.used+=r.used; if(r.vStart) m.vFull=Math.max(m.vFull??0,r.vStart);
+  }
+  for(const c of charges){ const d=new Date(c.date),k=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`; if(byM[k]) byM[k].vFull=Math.max(byM[k].vFull??0,c.v) }
+  const months = Object.values(byM).sort((a,b)=>a.k<b.k?-1:1).slice(-6);
+  months.forEach(m=>m.kmFull = m.used? m.km/m.used*100 : null); // km que da una carga completa
+  const base = months[0]?.kmFull;
+  months.forEach(m=>m.health = base&&m.kmFull ? m.kmFull/base*100 : null);
+  return {months};
+}
+
+/* ---------- MD5 (para el desbloqueo de firmware Gemini) ---------- */
+function md5(bytes){
+  const K=new Uint32Array(64),R=[7,12,17,22,7,12,17,22,7,12,17,22,7,12,17,22,5,9,14,20,5,9,14,20,5,9,14,20,5,9,14,20,4,11,16,23,4,11,16,23,4,11,16,23,4,11,16,23,6,10,15,21,6,10,15,21,6,10,15,21,6,10,15,21];
+  for(let i=0;i<64;i++)K[i]=Math.floor(Math.abs(Math.sin(i+1))*2**32)>>>0;
+  const len=bytes.length,nb=((len+8)>>6)+1,w=new Uint32Array(nb*16);
+  for(let i=0;i<len;i++)w[i>>2]|=bytes[i]<<((i%4)*8);
+  w[len>>2]|=0x80<<((len%4)*8); w[nb*16-2]=len*8;
+  let a0=0x67452301,b0=0xefcdab89,c0=0x98badcfe,d0=0x10325476;
+  for(let j=0;j<nb*16;j+=16){
+    let A=a0,B=b0,C=c0,D=d0;
+    for(let i=0;i<64;i++){
+      let F,g;
+      if(i<16){F=(B&C)|(~B&D);g=i}else if(i<32){F=(D&B)|(~D&C);g=(5*i+1)%16}
+      else if(i<48){F=B^C^D;g=(3*i+5)%16}else{F=C^(B|~D);g=(7*i)%16}
+      F=(F+A+K[i]+w[j+g])>>>0; A=D;D=C;C=B; B=(B+((F<<R[i])|(F>>>(32-R[i]))))>>>0;
+    }
+    a0=(a0+A)>>>0;b0=(b0+B)>>>0;c0=(c0+C)>>>0;d0=(d0+D)>>>0;
+  }
+  const out=new Uint8Array(16);[a0,b0,c0,d0].forEach((v,i)=>{for(let k=0;k<4;k++)out[i*4+k]=(v>>>(8*k))&255});
+  return out;
+}
+
+/* ---------- Bluetooth ---------- */
+let dev=null, chars={}, keepAlive=null;
+async function connectBLE(){
+  if(!navigator.bluetooth){
+    toast(inFrame?'Aquí el Bluetooth está bloqueado. Abre la app instalada o la web en Chrome.':isIOS?'En iPhone, Safari y Chrome no tienen Bluetooth. Instala la app gratuita «Bluefy» de la App Store y abre esta web desde ella.':'Este navegador no tiene Bluetooth web. Usa Chrome en Android o la app instalada.','warn');return;
+  }
+  try{
+    dev = await navigator.bluetooth.requestDevice({filters:[{services:[SVC]}],optionalServices:[SVC]});
+    dev.addEventListener('gattserverdisconnected',onDisconnect);
+    resetSession(); await setupGatt();
+  }catch(err){
+    if(err && err.name==='NotFoundError') return; // usuario canceló
+    toast('No se pudo conectar: '+(err.message||err),'crit'); setConn(null);
+  }
+}
+async function setupGatt(){
+  {
+    setConn('Conectando…'); chars={};
+    const server = await dev.gatt.connect();
+    const svc = await server.getPrimaryService(SVC);
+    for(const [k,id] of Object.entries(CH)){ try{chars[k]=await svc.getCharacteristic(UUID(id))}catch{} }
+    S.firmware = await readU16('firmware');
+    S.hardware = await readU16('hardware');
+    if(S.firmware>=4034) await unlockGemini();
+    S.link='ble';
+    S.serial=await readU16('serial'); S.mode=await readU16('mode');
+    const lo=await readU16('lifeOdo'); if(lo!=null) S.lifeKm=lo*1.60934;
+    S.lights=await readU16('lightMode');
+    for(const k of ['battery','voltage','rpm','temp','batTemp','current','pitch','roll','tripOdo','headroom','mode','lightMode'])
+      if(chars[k]){ try{ chars[k].addEventListener('characteristicvaluechanged',e=>onValue(k,e.target.value)); await chars[k].startNotifications() }catch{} }
+    // lectura inicial
+    for(const k of ['battery','voltage','temp','batTemp','tripOdo']){ const v=await readRaw(k); if(v) onValue(k,v) }
+    setConn(dev.name||'Conectada'); toast(`Conectada a ${dev.name||'la tabla'} · firmware ${S.firmware??'?'}`);
+    if(S.src==='volt') speak(`Conectada. Batería aproximada ${Math.round(S.battery)} por ciento`);
+    wake(); render();
+  }
+}
+async function readRaw(k){ if(!chars[k]) return null; try{return await chars[k].readValue()}catch{return null} }
+async function readU16(k){ const v=await readRaw(k); return v&&v.byteLength>=2? v.getUint16(0):null }
+async function unlockGemini(){
+  // Desafío/respuesta usado por firmware 4034–4xxx (Gemini). Firmware 5xxx+ usa claves firmadas por servidor y no se puede.
+  if(!chars.uartRead||!chars.uartWrite){toast('Firmware protegido: sin canal de desbloqueo.','warn');return}
+  const fw = await chars.firmware.readValue();
+  const buf=[];
+  await new Promise(async (resolve)=>{
+    const h=e=>{const v=new Uint8Array(e.target.value.buffer);buf.push(...v);if(buf.length>=20){chars.uartRead.removeEventListener('characteristicvaluechanged',h);resolve()}};
+    chars.uartRead.addEventListener('characteristicvaluechanged',h);
+    await chars.uartRead.startNotifications();
+    await chars.firmware.writeValue(fw);
+    setTimeout(resolve,4000);
+  });
+  if(buf.length<20){toast('La tabla no envió el desafío de desbloqueo. Puede que el firmware sea 5xxx+ (no compatible).','warn');return}
+  const pwd=[0xD9,0x25,0x5F,0x0F,0x23,0x35,0x4E,0x19,0xBA,0x73,0x9C,0xCD,0xC4,0xA9,0x17,0x65];
+  const hash=md5(new Uint8Array([...buf.slice(3,19),...pwd]));
+  const out=[0x43,0x52,0x58,...hash]; out.push(out.reduce((a,b)=>a^b,0));
+  try{await chars.uartRead.stopNotifications()}catch{}
+  await chars.uartWrite.writeValue(new Uint8Array(out));
+  clearInterval(keepAlive);
+  keepAlive=setInterval(()=>chars.firmware?.writeValue(fw).catch(()=>{}),15000);
+}
+function notify(body,tag){
+  if(!cfg.notify||!('Notification' in window)||Notification.permission!=='granted') return;
+  const opt={body,tag,icon:'icon-192.png',badge:'icon-192.png',renotify:true};
+  if(navigator.serviceWorker?.controller) navigator.serviceWorker.ready.then(r=>r.showNotification('Jandri',opt)).catch(()=>{});
+  else { try{ new Notification('Jandri',opt) }catch{} }
+}
+let manualOff=false;
+async function onDisconnect(){
+  clearInterval(keepAlive); if(S.link!=='ble') return;
+  S.link='off'; setConn(null); render();
+  if(manualOff){ manualOff=false; finishRide(); render(); return }
+  speak('Conexión perdida con la tabla'); vib([300,100,300]); if(cfg.beep) beep(3,520);
+  toast('Conexión perdida con la tabla'+(cfg.autoReconnect?' · reconectando…':''),'warn');
+  if(!cfg.autoReconnect){ finishRide(); render(); return }
+  for(let i=0;i<6;i++){
+    setConn(`Reconectando ${i+1}/6`);
+    await new Promise(r=>setTimeout(r,2000*(i+1)));
+    try{ await setupGatt(); speak('Tabla reconectada'); return }catch{}
+  }
+  setConn(null); finishRide(); toast('No se pudo reconectar. Pulsa Conectar.','crit'); render();
+}
+async function disconnect(){
+  manualOff=true; try{dev?.gatt?.disconnect()}catch{} }
+async function setLights(mode){
+  if(!chars.lightMode) return toast('Esta tabla no expone el control de luces','warn');
+  const b=new Uint8Array([0,mode]); try{await chars.lightMode.writeValue(b);S.lights=mode;render()}catch(e){toast('No se pudo cambiar las luces','crit')}
+}
+function onValue(k,dv){
+  const u=dv.byteLength>=2?dv.getUint16(0):dv.getUint8(0), lo=dv.getUint8(dv.byteLength-1), hi=dv.byteLength>=2?dv.getUint8(0):0;
+  switch(k){
+    case 'battery': S.bmsRaw=lo; break;
+    case 'voltage': S.voltage=u/10; break;
+    case 'rpm': S.rpm=u; S.speed=u*M().circ*60/1000; break;
+    case 'temp': S.tempMotor=hi; S.tempCtrl=lo; break;
+    case 'batTemp': S.batTemp=lo; break;
+    case 'current': S.current=dv.getInt16(0)*0.0018; break;
+    case 'pitch': S.pitch=(u-1800)/10; break;
+    case 'roll': S.roll=(u-1800)/10; break;
+    case 'tripOdo': S.tripKm=u*M().circ/1000; break;
+    case 'headroom': S.headroom=u; break;
+    case 'mode': S.mode=u; break;
+    case 'lightMode': S.lights=u; break;
+  }
+  tick();
+}
+
+
+/* ---------- session, alerts, recording ---------- */
+function resetSession(){vBuf=[];Object.assign(S,{vStart:null,startBattery:null,startTime:null,maxSpeed:0,tripKm:0,batHist:[],speedHist:[],track:[],alertsFired:{},lastStep:null,pctEst:null,_low:0,_vn:0})}
+let lastHist=0;
+function tick(){
+  const now=Date.now();
+  computeBattery();
+  if(S.startBattery==null && S.battery!=null) S.startBattery=S.battery;
+  if(S.voltage!=null && (S._vn=(S._vn||0)+1)<=15) S.vStart=Math.max(S.vStart??0,S.voltage); // voltaje en reposo al empezar
+  if(S.speed>2 && !S.startTime && cfg.autoRecord) S.startTime=now;
+  S.maxSpeed=Math.max(S.maxSpeed,S.speed);
+  if(now-lastHist>2000){lastHist=now; S.batHist.push([now,S.battery]); S.speedHist.push([now,S.speed]); if(S.speedHist.length>300){S.speedHist.shift();S.batHist.shift()}}
+  // cell voltage approx
+  if(S.voltage){const n=M().cells;S.cellsV=Array.from({length:n},(_,i)=>S.voltage/n+(Math.sin(i*1.7)*0.012))}
+  checkAlerts(); paint();
+}
+function alertOnce(key,msg,kind){
+  if(S.alertsFired[key])return; S.alertsFired[key]=1; toast(msg,kind);
+  if(cfg.vibrate&&navigator.vibrate) navigator.vibrate(kind==='crit'?[200,100,200,100,400]:[200,100,200]);
+  notify(msg,key);
+}
+function checkAlerts(){
+  const p=S.battery;
+  if(p!=null){
+    // aviso cada vez que se cruza un tramo de 10 % (90→80, 80→70…)
+    if(S.lastStep==null) S.lastStep=Math.ceil(p/10)*10;
+    else if(p>S.lastStep+5) S.lastStep=Math.ceil(p/10)*10;          // se ha cargado
+    else while(p<=S.lastStep-10){ S.lastStep-=10; if(S.lastStep>0) announce(S.lastStep) }
+  }
+  if(S.voltage!=null){
+    if(S.voltage<cfg.vLow && Math.max(...vBuf)<cfg.vLow){
+      if(!S._low){ S._low=1; alarm(); speak('Voltaje bajo. Para la tabla ya.'); notify('Voltaje bajo: para ya','low'); vib([500,150,500,150,500]); toast(`Voltaje bajo: ${S.voltage.toFixed(1)} V. Para ya: la tabla puede apagarse sin avisar.`,'crit') }
+    } else if(S.voltage>cfg.vLow+1) S._low=0;
+  }
+  if(S.speed>=cfg.speedAlert){ if(!S._spd){S._spd=1;toast(`Velocidad alta: ${fmt(isMi()?S.speed*0.621:S.speed,0)} ${sU()}. Cerca del pushback.`,'warn');vib([120]);speak('Velocidad alta')} } else if(S.speed<cfg.speedAlert-3) S._spd=0;
+  if(S.tempMotor>=65) alertOnce('t',`Motor a ${S.tempMotor.toFixed(0)} °C. Reduce el ritmo.`,'warn');
+}
+function rideSnapshot(){
+  if(!S.startTime||S.tripKm<0.2) return null;
+  const min=(Date.now()-S.startTime)/60000, used=Math.max(0,(S.startBattery??0)-(S.battery??0));
+  return {id:S.startTime,date:S.startTime,km:+S.tripKm.toFixed(2),min:Math.round(min),max:+S.maxSpeed.toFixed(1),used:Math.round(used),
+    wh:+((used/100*M().wh)/S.tripKm).toFixed(1),ppk:+(used/S.tripKm).toFixed(2),vStart:S.vStart??null,vEnd:S.voltage!=null?+S.voltage.toFixed(2):null};
+}
+setInterval(()=>{ const r=rideSnapshot(); if(r) store.set('pending',r) },20000);
+(function recoverPending(){ const r=store.get('pending',null); if(r&&!rides.some(x=>x.id===r.id)){ rides.unshift(r); store.set('rides',rides) } store.set('pending',null) })();
+function finishRide(){
+  const snap=rideSnapshot(); store.set('pending',null);
+  if(!snap){ S.startTime=null; return }
+  rides=rides.filter(r=>r.id!==snap.id); rides.unshift(snap); rides=rides.slice(0,500);
+  store.set('rides',rides); S.startTime=null; toast('Salida guardada en el historial'); return;
+  const min=(Date.now()-S.startTime)/60000, used=Math.max(0,(S.startBattery??0)-(S.battery??0));
+  const whTotal=used/100*M().wh; // aprox. Wh del pack
+  rides.unshift({id:Date.now(),date:Date.now(),km:+S.tripKm.toFixed(2),min:+min.toFixed(0),max:+S.maxSpeed.toFixed(1),used:+used.toFixed(0),
+    wh:+(whTotal/S.tripKm).toFixed(1),ppk:+(used/S.tripKm).toFixed(2),vStart:S.vStart??null,vEnd:S.voltage!=null?+S.voltage.toFixed(2):null});
+  store.set('rides',rides); S.startTime=null; toast('Salida guardada en el historial');
+}
+let wl=null;
+async function wake(){ if(!cfg.wakeLock||!('wakeLock' in navigator))return; try{wl=await navigator.wakeLock.request('screen')}catch{} }
+document.addEventListener('visibilitychange',()=>{ if(document.visibilityState==='visible'&&S.link!=='off') wake() });
+
+/* GPS */
+let geoId=null;
+function toggleGPS(on){
+  if(on){ if(!navigator.geolocation){toast('GPS no disponible','warn');return false}
+    geoId=navigator.geolocation.watchPosition(p=>{S.track.push([p.coords.latitude,p.coords.longitude]);if(route==='ride')drawTrack()},
+      ()=>{toast('Permiso de ubicación denegado. La ruta no se dibujará.','warn');cfg.gps=false;saveCfg();render()},{enableHighAccuracy:true});
+  } else if(geoId!=null){navigator.geolocation.clearWatch(geoId);geoId=null}
+  return true;
+}
+
+function setConn(txt){
+  const d=$('#dot'); d.className='dot'+(S.link==='ble'?' on':'');
+  $('#connTxt').textContent=txt||'Sin conexión';
+}
+
+/* ============================================================ VIEWS */
+const TABS=[['home','Inicio'],['ride','Ruta'],['battery','Batería'],['log','Historial'],['prefs','Ajustes']];
+const TABICON={home:'home',ride:'ride',battery:'bat',log:'log',prefs:'set'};
+let route='home';
+function renderTabs(){ $('#tabs').innerHTML=TABS.map(([id,l])=>`<a href="#${id}" ${route===id?'aria-current="page"':''}>${ic(TABICON[id])}<span>${l}</span></a>`).join('') }
+
+function ringSVG(p){
+  const r=88,c=2*Math.PI*r,arc=c*0.75,fill=p==null?0:arc*p/100;
+  let ticks='';for(let i=0;i<=40;i++){const a=(i/40)*270*Math.PI/180;const r1=104,r2=i%10?100:96;ticks+=`<line x1="${110+r1*Math.cos(a)}" y1="${110+r1*Math.sin(a)}" x2="${110+r2*Math.cos(a)}" y2="${110+r2*Math.sin(a)}" stroke="var(--line2)" stroke-width="1.5"/>`}
+  return `<svg viewBox="0 0 220 220">${ticks}
+  <circle cx="110" cy="110" r="${r}" fill="none" stroke="var(--line)" stroke-width="12" stroke-dasharray="${arc} ${c}" stroke-linecap="round"/>
+  <circle id="ringFill" cx="110" cy="110" r="${r}" fill="none" stroke="${batColor(p)}" stroke-width="12" stroke-dasharray="${fill} ${c}" stroke-linecap="round" style="filter:drop-shadow(0 0 8px ${batColor(p)});transition:stroke-dasharray .6s"/></svg>`;
+}
+function vHome(){
+  const p=S.battery, rl=rangeLeft(), off=S.link==='off';
+  const tag = p==null?'':p<=cfg.alert2?'<span class="tag crit">Crítica</span>':p<=cfg.alert1?'<span class="tag warn">Baja</span>':'<span class="tag ok">Óptima</span>';
+  return `
+  <section class="panel hero">
+    <div class="boardname">Onewheel ${M().name}${S.mode?` · ${MODE_NAMES[S.mode]||'Modo '+S.mode}`:''}</div>
+    <div class="ring">${ringSVG(p)}
+      <div class="center">
+        <div class="pct" id="pct">${p==null?'--':approx()+Math.round(p)}<sup>%</sup></div>
+        <div class="sub" id="psrc">${S.src==='volt'?'Estimada por voltaje':S.src==='bms'?'Dato del BMS':'Batería'}</div>
+        <div class="range" id="range">${off?'Enciende la tabla, cierra la app oficial y pulsa Conectar':rl?`≈ <b>${fmt(dist(rl[2]),1)}</b> ${dU()} restantes<span class="rsrc">${rangeInfo}</span>`:'Leyendo voltaje…'}</div>
+      </div>
+    </div>
+    ${off&&!navigator.bluetooth&&isIOS?`<p class="note" style="text-align:center;max-width:34ch;margin:12px auto 0;color:var(--warn)">En iPhone hace falta la app gratuita <b>Bluefy</b> (App Store): ábrela y entra en esta misma dirección.</p>`:''}
+    <div class="cta-row">
+      ${off?`<button class="btn primary" data-act="connect">${ic('bt','width="16" height="16"')}Conectar tabla</button>
+`
+           :`<button class="btn" data-act="disconnect">Desconectar</button>${tag}`}
+    </div>
+  </section>
+  <section class="grid3">
+    <div class="stat"><div class="k">Voltaje</div><div class="v" id="hV">${fmt(S.voltage,1)}<small>V</small></div></div>
+    <div class="stat"><div class="k">Velocidad</div><div class="v" id="hS">${fmt(isMi()?S.speed*.621:S.speed,1)}<small>${sU()}</small></div></div>
+    <div class="stat"><div class="k">Trayecto</div><div class="v" id="hT">${fmt(dist(S.tripKm),2)}<small>${dU()}</small></div></div>
+    <div class="stat"><div class="k">Motor</div><div class="v" id="hM">${fmt(S.tempMotor)}<small>°C</small></div></div>
+    <div class="stat"><div class="k">Pack</div><div class="v" id="hB">${fmt(S.batTemp)}<small>°C</small></div></div>
+    <div class="stat"><div class="k">Consumo</div><div class="v" id="hA">${fmt(S.current,1)}<small>A</small></div></div>
+  </section>
+  <section class="panel">
+    <h3>${ic('light','width="15" height="15"')}Luces</h3>
+    <div class="chips">${[['Apagadas',0],['Automáticas',1],['Manual',2]].map(([l,v])=>`<button class="chip" data-light="${v}" aria-pressed="${S.lights===v}">${l}</button>`).join('')}</div>
+  </section>
+  <section class="panel">
+    <h3>${ic('wrench','width="15" height="15"')}Estado de la tabla <span class="tag">${off?'sin datos':'en vivo'}</span></h3>
+    <div class="list">
+      ${row('bat','BMS de la batería',off?'Sin datos':S.src==='bms'?'Comunica: porcentaje real':'No comunica (0 % y 0 °C). El porcentaje se calcula con el voltaje.',off?'':S.src==='bms'?'<span class="tag ok">OK</span>':'<span class="tag warn">Estimado</span>')}
+      ${row('tire','Presión del neumático',`Objetivo ${cfg.tirePsi} psi · revisa cada ${cfg.tireCheckKm} km`, tireDue()?'<span class="tag warn">Revisar</span>':'<span class="tag ok">Al día</span>')}
+      ${row('temp','Temperatura del controlador',S.tempCtrl==null?'Sin lectura':`${fmt(S.tempCtrl)} °C`, S.tempCtrl>60?'<span class="tag warn">Alta</span>':'')}
+      ${row('bolt','Firmware',`${S.firmware??'—'} · hardware ${S.hardware??'—'}`, S.firmware>=5000?'<span class="tag warn">Protegido</span>':'')}
+    </div>
+  </section>`;
+}
+function row(icn,t,s,right=''){return `<div class="row"><div class="ico">${ic(icn)}</div><div class="meta"><div class="t">${t}</div><div class="s">${s}</div></div>${right}</div>`}
+function tireDue(){const odo=S.lifeKm??0;return odo&&odo-cfg.lastTireKm>cfg.tireCheckKm}
+
+function vRide(){
+  const elapsed=S.startTime?Math.floor((Date.now()-S.startTime)/1000):0;
+  return `
+  <section class="panel gauge">
+    <canvas id="gauge" width="680" height="390" aria-label="Velocímetro"></canvas>
+    <div class="speedv" id="spd">${fmt(isMi()?S.speed*.621:S.speed)}</div>
+    <div class="speedu">${sU()} · máx <span id="maxs">${fmt(isMi()?S.maxSpeed*.621:S.maxSpeed,1)}</span></div>
+    <div class="headroom">
+      <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--muted);margin-bottom:6px"><span>MARGEN ANTES DEL PUSHBACK</span><span class="mono" id="hrv">${S.headroom==null?'—':fmt(S.headroom)+'%'}</span></div>
+      <div class="bar"><i id="hrb" style="width:${S.headroom??0}%"></i></div>
+    </div>
+  </section>
+  <section class="grid3">
+    <div class="stat"><div class="k">Tiempo</div><div class="v mono" id="rT">${hms(elapsed)}</div></div>
+    <div class="stat"><div class="k">Distancia</div><div class="v" id="rD">${fmt(dist(S.tripKm),2)}<small>${dU()}</small></div></div>
+    <div class="stat"><div class="k">Gastado</div><div class="v" id="rU">${S.startBattery!=null&&S.battery!=null?fmt(S.startBattery-S.battery):'—'}<small>%</small></div></div>
+  </section>
+  <section class="panel">
+    <h3>Inclinación <span class="tag mono" id="tilt">P ${fmt(S.pitch,1)}° · R ${fmt(S.roll,1)}°</span></h3>
+    <canvas class="horizon" id="horizon" width="600" height="200"></canvas>
+  </section>
+  <section class="panel">
+    <h3>Ruta GPS <span class="tag">${cfg.gps?'grabando':'apagado'}</span></h3>
+    <canvas id="track" width="640" height="400"></canvas>
+    <div class="switch"><div><div>Grabar ruta con el GPS del móvil</div><div class="s">Dibuja el recorrido; no sale del teléfono.</div></div><input type="checkbox" id="gpsT" ${cfg.gps?'checked':''}></div>
+  </section>
+  <section class="panel"><h3>Velocidad · últimos 10 min</h3>${spark(S.speedHist,'var(--ion)',null,sU())}</section>`;
+}
+const hms=s=>`${String(Math.floor(s/3600)).padStart(1,'0')}:${String(Math.floor(s/60)%60).padStart(2,'0')}:${String(s%60).padStart(2,'0')}`;
+
+function spark(data,color,max,unit){
+  if(data.length<3) return `<div class="empty">Aparecerá en cuanto haya lecturas.</div>`;
+  const W=320,H=140,pl=28,pb=16,vals=data.map(d=>d[1]??0),mx=max??Math.max(5,Math.ceil(Math.max(...vals)/5)*5),mn=0;
+  const x=i=>pl+(W-pl-6)*i/(data.length-1), y=v=>8+(H-pb-8)*(1-(v-mn)/(mx-mn));
+  const pts=vals.map((v,i)=>`${x(i).toFixed(1)},${y(v).toFixed(1)}`).join(' ');
+  const grid=[0,.5,1].map(f=>{const v=mn+(mx-mn)*f;return `<line x1="${pl}" x2="${W-6}" y1="${y(v)}" y2="${y(v)}" stroke="var(--line)" stroke-dasharray="2 3"/><text x="${pl-4}" y="${y(v)+3}" text-anchor="end">${Math.round(v)}</text>`}).join('');
+  const last=vals.length-1;
+  return `<svg class="chart" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none">${grid}
+  <polygon points="${pl},${y(mn)} ${pts} ${x(last)},${y(mn)}" fill="${color}" opacity=".12"/>
+  <polyline points="${pts}" fill="none" stroke="${color}" stroke-width="1.8" vector-effect="non-scaling-stroke"/>
+  <circle cx="${x(last)}" cy="${y(vals[last])}" r="3.5" fill="${color}"/>
+  <text x="${W-6}" y="${H-3}" text-anchor="end">${unit}</text></svg>`;
+}
+
+function vBattery(){
+  const p=S.battery, m=M(), rl=rangeLeft();
+  const toTarget=Math.max(0,cfg.chargeTarget-(p??0));
+  // carga casi lineal hasta 80 %, más lenta después (fase CV)
+  const full=m.chargeMin[cfg.charger], lin=Math.min(toTarget,Math.max(0,80-(p??0))), cv=toTarget-lin;
+  const mins=Math.round(lin/100*full*0.85+cv/100*full*1.6);
+  const vPct=S.pctEst;
+  const lfp=m.chem==='lfp';
+  const note = S.voltage==null?'Conecta la tabla para leer el voltaje.'
+    : S.src==='volt'?`El BMS no envía datos, así que el porcentaje sale del voltaje. ${lfp?'Las baterías LiFePO4 mantienen casi el mismo voltaje entre el 30 % y el 80 %: tómalo como orientativo y fíate más de los avisos de voltaje bajo.':''}`
+    : Math.abs(vPct-p)>12?`El voltaje marca ${fmt(Math.abs(vPct-p))} puntos ${vPct<p?'menos':'más'} que el BMS. Si se repite en reposo, haz una carga completa para equilibrar celdas.`:'El BMS y el voltaje cuadran. Pack sano.';
+  return `
+  <section class="panel">
+    <h3>${ic('bat','width="15" height="15"')}Pack ${m.cells}S ${lfp?'LiFePO4':'Li-ion'} · corte ${cfg.vLow} V</h3>
+    <div class="grid2">
+      <div class="stat"><div class="k">Dato del BMS</div><div class="v" id="bP">${S.src==='bms'?fmt(S.bmsRaw):'—'}<small>%</small></div></div>
+      <div class="stat"><div class="k">Por voltaje</div><div class="v" id="bVP" style="color:${batColor(vPct)}">${fmt(vPct)}<small>%</small></div></div>
+      <div class="stat"><div class="k">Voltaje pack</div><div class="v" id="bV">${fmt(S.voltage,2)}<small>V</small></div></div>
+      <div class="stat"><div class="k">Autonomía</div><div class="v">${rl?`${fmt(dist(rl[0]),1)}–${fmt(dist(rl[1]),1)}`:'—'}<small>${dU()}</small></div><div class="s muted" style="font-size:11px;margin-top:2px">${rl?rangeInfo:''}</div></div>
+    </div>
+    <p class="note" style="margin:12px 0 0">${note}</p>
+  </section>
+  <section class="panel">
+    <h3>Calibración <span class="tag ${cfg.vFull?'ok':''}">${cfg.vFull?'ajustada':'de fábrica'}</span></h3>
+    <p class="note" style="margin:0 0 12px">Justo al acabar de cargar (luz verde) y con la tabla parada, pulsa el botón. Ese voltaje pasará a ser tu 100 % y el cálculo se ajustará a tu batería.</p>
+    <div class="cta-row" style="justify-content:flex-start;margin:0">
+      <button class="btn primary" data-act="calib">Recién cargada${S.voltage?` · ${S.voltage.toFixed(2)} V`:''}</button>
+      ${cfg.vFull?`<button class="btn ghost" data-act="calibReset">Quitar (${cfg.vFull.toFixed(2)} V)</button>`:''}
+    </div>
+  </section>
+  <section class="panel">
+    <h3>Celdas (estimación) <span class="tag">${m.cells} en serie</span></h3>
+    <div class="cells" id="cells">${S.cellsV.length?S.cellsV.map((v,i)=>`<div class="cell">${i+1}<b>${v.toFixed(2)}</b></div>`).join(''):'<div class="empty" style="grid-column:1/-1">Sin lectura de voltaje.</div>'}</div>
+    <p class="note" style="margin:10px 0 0">Las tablas no envían el voltaje de cada celda por Bluetooth; se reparte el total del pack. Rango sano: ${m.chem==='lfp'?'2,9–3,65':'3,2–4,2'} V por celda.</p>
+  </section>
+  <section class="panel"><h3>Batería en esta sesión</h3>${spark(S.batHist,'var(--plasma)',100,'%')}</section>
+  ${vReport()}
+  <section class="panel">
+    <h3>${ic('bolt','width="15" height="15"')}Calculadora de carga</h3>
+    <div class="grid2">
+      <label class="f">Cargador<select id="charger"><option value="std" ${cfg.charger==='std'?'selected':''}>Estándar</option><option value="fast" ${cfg.charger==='fast'?'selected':''}>Rápido (Hypercharger / Ultracharger)</option></select></label>
+      <label class="f">Cargar hasta: <span class="mono" style="color:var(--fg)">${cfg.chargeTarget}%</span><input type="range" id="target" min="50" max="100" step="5" value="${cfg.chargeTarget}"></label>
+    </div>
+    <div style="margin-top:14px;display:flex;align-items:baseline;gap:10px;flex-wrap:wrap">
+      <span class="pct" style="font-size:44px">${p==null?'—':mins>=60?`${Math.floor(mins/60)}h ${mins%60}m`:`${mins}m`}</span>
+      <span class="muted">${p==null?'Conecta para calcular':`de ${fmt(p)}% a ${cfg.chargeTarget}% · listo a las ${new Date(Date.now()+mins*60e3).toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'})}`}</span>
+    </div>
+    <p class="note" style="margin:10px 0 0">Para alargar la vida del pack, carga al 80–90 % en el día a día y al 100 % solo antes de una salida larga.</p>
+  </section>`;
+}
+
+function vReport(){
+  const {months}=monthly();
+  if(months.length<2) return `<section class="panel wide"><h3>Informe mensual de la batería</h3><div class="empty">Hacen falta salidas de al menos dos meses distintos. Cada salida guarda cuántos km te da cada 10 % de batería, y aquí verás si esa cifra baja con el tiempo.</div></section>`;
+  const last=months[months.length-1], drop=100-(last.health??100);
+  const verdict = drop>20?['crit','Degradación notable',`Una carga completa te da un ${fmt(drop)} % menos de km que en ${months[0].label}. Revisa celdas y conexiones, y no apures por debajo del ${cfg.alert1} %.`]
+    : drop>8?['warn','Desgaste moderado',`Pierdes un ${fmt(drop)} % de autonomía desde ${months[0].label}. Es normal en una batería de esta edad; carga después de cada salida y guárdala a media carga si no la usas.`]
+    : ['ok','Estable',`La autonomía se mantiene (${drop>0?'-':'+'}${fmt(Math.abs(drop),1)} % desde ${months[0].label}).`];
+  const W=320,H=150,pl=8,pb=26,bw=(W-pl*2)/months.length, mx=Math.max(...months.map(m=>m.kmFull))*1.15;
+  const bars=months.map((m,i)=>{const h=(H-pb-14)*m.kmFull/mx,x=pl+i*bw+bw*.18,y=H-pb-h,col=m.health<80?'var(--crit)':m.health<92?'var(--warn)':'var(--ion)';
+    return `<rect x="${x}" y="${y}" width="${bw*.64}" height="${h}" rx="4" fill="${col}" opacity="${i===months.length-1?1:.55}"/>
+    <text x="${x+bw*.32}" y="${y-4}" text-anchor="middle" style="fill:var(--fg)">${fmt(dist(m.kmFull),1)}</text>
+    <text x="${x+bw*.32}" y="${H-pb+14}" text-anchor="middle">${m.label}</text>`}).join('');
+  return `<section class="panel wide">
+    <h3>Informe mensual de la batería <span class="tag ${verdict[0]}">${verdict[1]}</span></h3>
+    <p class="note" style="margin:0 0 10px;color:var(--fg)">${verdict[2]}</p>
+    <div class="k muted" style="font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;margin-bottom:4px">${dU()} por carga completa</div>
+    <svg class="chart" viewBox="0 0 ${W} ${H}" style="height:170px">${bars}<line x1="${pl}" x2="${W-pl}" y1="${H-pb}" y2="${H-pb}" stroke="var(--line2)"/></svg>
+    <div style="overflow-x:auto;margin-top:10px"><table class="rep">
+      <thead><tr><th>Mes</th><th>Salidas</th><th>${dU()}</th><th>${dU()}/10 %</th><th>V carga</th><th>Salud</th></tr></thead>
+      <tbody>${months.slice().reverse().map(m=>`<tr><td>${m.label}</td><td>${m.n}</td><td>${fmt(dist(m.km),1)}</td><td>${fmt(dist(m.kmFull/10),2)}</td><td>${m.vFull?fmt(m.vFull,2):'—'}</td><td style="color:${m.health<80?'var(--crit)':m.health<92?'var(--warn)':'var(--ok)'}">${fmt(m.health)} %</td></tr>`).join('')}</tbody>
+    </table></div>
+    <p class="note" style="margin:10px 0 0">Salud = km por carga del mes frente al primer mes. El frío de invierno puede restar un 10–20 % sin que la batería esté peor; compara meses parecidos.</p>
+  </section>`;
+}
+function vLog(){
+  const list=rides;
+  const tot=list.reduce((a,r)=>({km:a.km+r.km,min:a.min+r.min,max:Math.max(a.max,r.max)}),{km:0,min:0,max:0});
+  const avgWh=list.length?list.reduce((a,r)=>a+r.wh,0)/list.length:0;
+  const life=S.lifeKm??0, kmAll=Math.max(life,list.reduce((a,r)=>a+r.km,0));
+  const badges=[['10','10 km',kmAll>=10],['100','100 km',kmAll>=100],['500','500 km',kmAll>=500],['1K','1.000 km',kmAll>=1000],['30','30 km/h',tot.max>=30],['2h','2 h seguidas',list.some(r=>r.min>=120)],['Eco','< 9 Wh/km',list.some(r=>r.wh<9)],['5x','5 salidas',list.length>=5]];
+  return `
+  ${list.length?'':'<p class="note" style="margin:0">Aún no hay salidas. Se graban solas al rodar con la tabla conectada.</p>'}
+  <section class="grid3">
+    <div class="stat"><div class="k">Distancia</div><div class="v">${fmt(dist(tot.km),1)}<small>${dU()}</small></div></div>
+    <div class="stat"><div class="k">Tiempo</div><div class="v">${Math.floor(tot.min/60)}h${String(tot.min%60).padStart(2,'0')}</div></div>
+    <div class="stat"><div class="k">Eficiencia</div><div class="v">${fmt(avgWh,1)}<small>Wh/km</small></div></div>
+  </section>
+  <section class="panel">
+    <h3>Salidas recientes <button class="tag" data-act="csv" style="cursor:pointer;background:none">Exportar CSV</button></h3>
+    <div class="list">${list.length?'':'<div class="empty">Sin salidas todavía.</div>'}${list.slice(0,50).map(r=>row('ride',`${fmt(dist(r.km),1)} ${dU()} · ${r.min} min`,`${new Date(r.date).toLocaleDateString('es-ES',{weekday:'short',day:'numeric',month:'short'})} · máx ${fmt(isMi()?r.max*.621:r.max,1)} ${sU()} · ${r.wh} Wh/km`,`<span class="tag ${r.used>60?'warn':''}">-${r.used}%</span>`)).join('')}</div>
+  </section>
+  <section class="panel">
+    <h3>Logros</h3>
+    <div class="grid3" style="grid-template-columns:repeat(4,1fr)">${badges.map(([b,l,g])=>`<div class="badge ${g?'got':''}"><div class="b">${b}</div>${l}</div>`).join('')}</div>
+  </section>
+  <section class="panel">
+    <h3>${ic('wrench','width="15" height="15"')}Mantenimiento</h3>
+    <div class="list">
+      ${row('tire','Neumático',`Última revisión a ${fmt(cfg.lastTireKm)} km del odómetro`,`<button class="tag" data-act="tireDone" style="cursor:pointer;background:none">Hecho hoy</button>`)}
+      ${row('wrench','Rodamientos y guardabarros','Revisa cada 1.000 km o tras mojarse',`${(life-cfg.serviceKm)>1000?'<span class="tag warn">Toca</span>':''}<button class="tag" data-act="serviceDone" style="cursor:pointer;background:none">Hecho hoy</button>`)}
+      ${row('bolt','Odómetro total',S.lifeKm==null?'Conecta la tabla para leerlo':`${fmt(dist(S.lifeKm),0)} ${dU()}`)}
+    </div>
+  </section>`;
+}
+
+function vPrefs(){
+  return `
+  <section class="panel">
+    <h3>Tu tabla</h3>
+    <div class="grid2">
+      <label class="f">Modelo<select id="model">${Object.entries(MODELS).map(([k,m])=>`<option value="${k}" ${cfg.model===k?'selected':''}>${m.name}</option>`).join('')}</select></label>
+      <label class="f">Unidades<select id="units"><option value="km" ${cfg.units==='km'?'selected':''}>km · km/h</option><option value="mi" ${cfg.units==='mi'?'selected':''}>mi · mph</option></select></label>
+      <label class="f">Presión neumático (psi)<input type="number" id="tirePsi" min="10" max="35" value="${cfg.tirePsi}"></label>
+      <label class="f">Revisar cada (km)<input type="number" id="tireCheckKm" min="20" max="1000" value="${cfg.tireCheckKm}"></label>
+    </div>
+  </section>
+  <section class="panel">
+    <h3>${ic('bell','width="15" height="15"')}Avisos cada 10 %</h3>
+    <p class="note" style="margin:0 0 6px">Al bajar de tramo (90 → 80, 80 → 70…) el móvil dice «Batería 70 por ciento» y vibra. Por debajo del nivel crítico suena además una alarma.</p>
+    ${sw('voice','Aviso por voz','«Batería 70 por ciento», «Conexión perdida con la tabla»')}
+    ${voiceSel()}
+    ${sw('vibrate','Vibración','1 pulso normal · 2 en nivel bajo · 3 largos en crítico')}
+    ${sw('beep','Pitido','1 pitido normal · 2 en nivel bajo')}
+    <div class="cta-row" style="justify-content:flex-start;margin-top:12px">
+      <button class="btn" data-act="testVoice">Probar voz</button>
+      <button class="btn" data-act="testBeep">Probar pitido</button>
+      <button class="btn ghost" data-act="testAlarm">Probar alarma</button>
+    </div>
+  </section>
+  <section class="panel">
+    <h3>Umbrales</h3>
+    <label class="f">Nivel bajo: <span class="mono" style="color:var(--warn)">${cfg.alert1}%</span><input type="range" id="alert1" min="10" max="50" step="10" value="${cfg.alert1}"></label>
+    <label class="f" style="margin-top:10px">Nivel crítico: <span class="mono" style="color:var(--crit)">${cfg.alert2}%</span><input type="range" id="alert2" min="10" max="30" step="10" value="${cfg.alert2}"></label>
+    <label class="f" style="margin-top:10px">Alarma de voltaje bajo: <span class="mono" style="color:var(--crit)" data-u=" V">${cfg.vLow} V</span><input type="range" id="vLow" min="44" max="50" step="0.2" value="${cfg.vLow}"></label>
+    <label class="f" style="margin-top:10px">Aviso de velocidad: <span class="mono" style="color:var(--fg)" data-u=" km/h">${cfg.speedAlert} km/h</span><input type="range" id="speedAlert" min="12" max="40" step="1" value="${cfg.speedAlert}"></label>
+    <div style="margin-top:8px">
+      ${sw('notify','Notificaciones del sistema','Avisa aunque la app esté en segundo plano')}
+      ${sw('autoReconnect','Reconectar sola','Hasta 6 intentos si se pierde la conexión')}
+      ${sw('wakeLock','Pantalla siempre encendida','Mientras haya una tabla conectada')}
+      ${sw('autoRecord','Grabar salidas automáticamente','Empieza al superar 2 km/h')}
+    </div>
+  </section>
+  <section class="panel">
+    <h3>${ic('bt','width="15" height="15"')}Compatibilidad</h3>
+    <div class="list">
+      ${row('bt','Bluetooth web',navigator.bluetooth?'Disponible en este navegador':'No disponible aquí: usa Chrome en Android o la app instalada',navigator.bluetooth?'<span class="tag ok">OK</span>':'<span class="tag warn">No</span>')}
+      ${row('bolt','V1 y Plus','Lectura directa por Bluetooth, sin desbloqueo','<span class="tag ok">Sí</span>')}
+      ${row('bolt','Firmware 4034–4xxx','Se desbloquea automáticamente al conectar','<span class="tag ok">Sí</span>')}
+      ${row('bolt','Firmware 5xxx o superior','Pint/XR/GT recientes cifran la conexión con clave del fabricante','<span class="tag warn">Limitado</span>')}
+    </div>
+    <p class="note" style="margin:12px 0 0">Versión ${window.__APPV}. App independiente, sin relación con Future Motion. Úsala bajo tu responsabilidad y no mires el móvil mientras ruedas.</p>
+  </section>
+  <section class="panel">
+    <h3>Datos</h3>
+    <div class="cta-row" style="justify-content:flex-start;margin:0">
+      <button class="btn" data-act="csv">Exportar salidas</button>
+      <button class="btn ghost" data-act="wipe" id="wipeBtn">Borrar historial</button>
+    </div>
+  </section>`;
+}
+function voiceSel(){
+  if(!('speechSynthesis' in window)) return `<p class="note">Este navegador no puede hablar.</p>`;
+  if(!voices.length) return `<p class="note" style="color:var(--warn)">El móvil no tiene ninguna voz en español. Instálala: Ajustes del móvil › Sistema › Idiomas › Salida de texto a voz › Servicios de voz de Google › Instalar datos de voz › Español (España). Después vuelve a abrir la app.</p>`;
+  const cur=pickVoice();
+  return `<label class="f" style="margin:6px 0 4px">Voz<select id="voiceURI">${voices.map(v=>`<option value="${v.voiceURI.replace(/"/g,'&quot;')}" ${cur&&v.voiceURI===cur.voiceURI?'selected':''}>${v.name} (${v.lang})</option>`).join('')}</select></label>`;
+}
+const sw=(k,t,s)=>`<div class="switch"><div><div>${t}</div><div class="s">${s}</div></div><input type="checkbox" id="${k}" ${cfg[k]?'checked':''}></div>`;
+
+/* ---------- live paint (sin re-render completo) ---------- */
+function paint(){
+  const sp=isMi()?S.speed*.621:S.speed, set=(id,h)=>{const e=document.getElementById(id);if(e)e.innerHTML=h};
+  if(route==='home'){
+    const p=S.battery,rl=rangeLeft(),f=$('#ringFill');
+    if(f){const c=2*Math.PI*88;f.setAttribute('stroke-dasharray',`${c*.75*(p??0)/100} ${c}`);f.setAttribute('stroke',batColor(p));f.style.filter=`drop-shadow(0 0 8px ${batColor(p)})`}
+    set('pct',`${p==null?'--':approx()+Math.round(p)}<sup>%</sup>`);
+    set('psrc',S.src==='volt'?'Estimada por voltaje':S.src==='bms'?'Dato del BMS':'Batería');
+    if(rl)set('range',`≈ <b>${fmt(dist(rl[2]),1)}</b> ${dU()} restantes<span class="rsrc">${rangeInfo}</span>`);
+    set('hV',`${fmt(S.voltage,1)}<small>V</small>`);set('hS',`${fmt(sp,1)}<small>${sU()}</small>`);
+    set('hT',`${fmt(dist(S.tripKm),2)}<small>${dU()}</small>`);set('hM',`${fmt(S.tempMotor)}<small>°C</small>`);
+    set('hB',`${fmt(S.batTemp)}<small>°C</small>`);set('hA',`${fmt(S.current,1)}<small>A</small>`);
+  } else if(route==='ride'){
+    set('spd',fmt(sp));set('maxs',fmt(isMi()?S.maxSpeed*.621:S.maxSpeed,1));
+    set('hrv',S.headroom==null?'—':fmt(S.headroom)+'%');const hb=$('#hrb');if(hb){hb.style.width=(S.headroom??0)+'%';hb.style.background=S.headroom<25?'var(--crit)':''}
+    set('rT',hms(S.startTime?Math.floor((Date.now()-S.startTime)/1000):0));set('rD',`${fmt(dist(S.tripKm),2)}<small>${dU()}</small>`);
+    set('rU',`${S.startBattery!=null&&S.battery!=null?fmt(S.startBattery-S.battery):'—'}<small>%</small>`);
+    set('tilt',`P ${fmt(S.pitch,1)}° · R ${fmt(S.roll,1)}°`);
+    drawGauge();drawHorizon();
+  } else if(route==='battery'){
+    set('bP',`${S.src==='bms'?fmt(S.bmsRaw):'—'}<small>%</small>`);set('bV',`${fmt(S.voltage,2)}<small>V</small>`);
+    set('bVP',`${fmt(S.pctEst)}<small>%</small>`);
+  }
+}
+function drawGauge(){
+  const c=$('#gauge');if(!c)return;const g=c.getContext('2d'),W=c.width,H=c.height,cx=W/2,cy=H*0.86,r=W*0.42;
+  g.clearRect(0,0,W,H);const max=40,v=Math.min(max,S.speed),a0=Math.PI,a1=2*Math.PI;
+  g.lineCap='round';g.lineWidth=26;g.strokeStyle='#1b2532';g.beginPath();g.arc(cx,cy,r,a0,a1);g.stroke();
+  const grad=g.createLinearGradient(cx-r,0,cx+r,0);grad.addColorStop(0,'#4fd6ff');grad.addColorStop(.6,'#9b8cff');grad.addColorStop(1,'#ff5d6c');
+  g.strokeStyle=grad;g.shadowColor='#4fd6ff';g.shadowBlur=18;g.beginPath();g.arc(cx,cy,r,a0,a0+Math.PI*v/max);g.stroke();g.shadowBlur=0;
+  g.fillStyle='#7f8ea2';g.font='22px JetBrains Mono, monospace';g.textAlign='center';
+  for(let s=0;s<=max;s+=5){const a=a0+Math.PI*s/max,r1=r-30,r2=r-(s%10?40:48);g.strokeStyle='#263344';g.lineWidth=3;g.beginPath();g.moveTo(cx+r1*Math.cos(a),cy+r1*Math.sin(a));g.lineTo(cx+r2*Math.cos(a),cy+r2*Math.sin(a));g.stroke();
+    if(s%10===0)g.fillText(isMi()?Math.round(s*.621):s,cx+(r-72)*Math.cos(a),cy+(r-72)*Math.sin(a)+8)}
+  const ap=a0+Math.PI*cfg.speedAlert/max;g.strokeStyle='#ffb547';g.lineWidth=5;g.beginPath();g.moveTo(cx+(r-14)*Math.cos(ap),cy+(r-14)*Math.sin(ap));g.lineTo(cx+(r+16)*Math.cos(ap),cy+(r+16)*Math.sin(ap));g.stroke();
+}
+function drawHorizon(){
+  const c=$('#horizon');if(!c)return;const g=c.getContext('2d'),W=c.width,H=c.height;g.clearRect(0,0,W,H);
+  g.save();g.translate(W/2,H/2);g.rotate(S.roll*Math.PI/180);const off=S.pitch*5;
+  g.fillStyle='rgba(79,214,255,.10)';g.fillRect(-W,off,W*2,H*2);
+  g.strokeStyle='#4fd6ff';g.lineWidth=3;g.beginPath();g.moveTo(-W,off);g.lineTo(W,off);g.stroke();
+  g.strokeStyle='#263344';g.lineWidth=2;for(let i=-3;i<=3;i++){if(!i)continue;g.beginPath();g.moveTo(-40,off-i*25);g.lineTo(40,off-i*25);g.stroke()}
+  g.restore();g.strokeStyle='#e7eef6';g.lineWidth=4;g.beginPath();g.moveTo(W/2-90,H/2);g.lineTo(W/2-30,H/2);g.moveTo(W/2+30,H/2);g.lineTo(W/2+90,H/2);g.stroke();
+  g.fillStyle='#e7eef6';g.beginPath();g.arc(W/2,H/2,5,0,7);g.fill();
+}
+function drawTrack(){
+  const c=$('#track');if(!c)return;const g=c.getContext('2d'),W=c.width,H=c.height;g.clearRect(0,0,W,H);
+  const t=S.track;if(t.length<2){g.fillStyle='#7f8ea2';g.font='22px IBM Plex Sans, sans-serif';g.textAlign='center';g.fillText(cfg.gps?'Esperando señal GPS…':'Activa el GPS para dibujar la ruta',W/2,H/2);return}
+  const la=t.map(p=>p[0]),lo=t.map(p=>p[1]),mnA=Math.min(...la),mxA=Math.max(...la),mnO=Math.min(...lo),mxO=Math.max(...lo);
+  const s=Math.min((W-60)/((mxO-mnO)||1e-5),(H-60)/((mxA-mnA)||1e-5));
+  const X=p=>30+(p[1]-mnO)*s,Y=p=>H-30-(p[0]-mnA)*s;
+  g.strokeStyle='#4fd6ff';g.lineWidth=4;g.shadowColor='#4fd6ff';g.shadowBlur=10;g.beginPath();t.forEach((p,i)=>i?g.lineTo(X(p),Y(p)):g.moveTo(X(p),Y(p)));g.stroke();g.shadowBlur=0;
+  g.fillStyle='#3ee0a1';g.beginPath();g.arc(X(t[0]),Y(t[0]),7,0,7);g.fill();g.fillStyle='#e7eef6';g.beginPath();g.arc(X(t[t.length-1]),Y(t[t.length-1]),7,0,7);g.fill();
+}
+
+/* ---------- render + events ---------- */
+function render(){
+  const v={home:vHome,ride:vRide,battery:vBattery,log:vLog,prefs:vPrefs}[route]||vHome;
+  $('#app').innerHTML=`<div class="view">${v()}</div>`; renderTabs();
+  if(route==='ride'){drawGauge();drawHorizon();drawTrack()}
+}
+function go(){route=(location.hash||'#home').slice(1);if(!TABS.some(t=>t[0]===route))route='home';render();scrollTo({top:0})}
+addEventListener('hashchange',go);
+
+let wipeArm=false;
+document.addEventListener('click',async e=>{
+  const b=e.target.closest('[data-act],[data-light]');if(!b)return;
+  if(b.dataset.light!=null) return setLights(+b.dataset.light);
+  const a=b.dataset.act;
+  if(a==='testVoice'){ speak(`Batería ${Math.max(10,Math.floor((S.battery??70)/10)*10)} por ciento`,true); vib([220]) }
+  if(a==='testBeep') beep(2);
+  if(a==='testAlarm') alarm();
+  if(a==='calib'){ if(S.voltage==null) return toast('Conecta la tabla primero','warn'); cfg.vFull=+S.voltage.toFixed(2); saveCfg(); charges.push({date:Date.now(),v:cfg.vFull}); store.set('charges',charges.slice(-60)); vBuf=[]; S.pctEst=null; computeBattery(); toast(`Guardado: ${cfg.vFull} V = 100 %`); render() }
+  if(a==='calibReset'){ cfg.vFull=null; saveCfg(); vBuf=[]; S.pctEst=null; computeBattery(); render() }
+  if(a==='connect'){ audioUnlock(); if(cfg.notify&&'Notification' in window&&Notification.permission==='default'){try{Notification.requestPermission()}catch{}} connectBLE() }
+  if(a==='disconnect') disconnect();
+  if(a==='tireDone'){cfg.lastTireKm=S.lifeKm??cfg.lastTireKm;saveCfg();toast('Revisión del neumático anotada');render()}
+  if(a==='serviceDone'){cfg.serviceKm=S.lifeKm??cfg.serviceKm;saveCfg();toast('Revisión anotada');render()}
+  if(a==='csv') exportCSV();
+  if(a==='wipe'){ if(!wipeArm){wipeArm=true;b.textContent='Pulsa otra vez para borrar';setTimeout(()=>{wipeArm=false;b.textContent='Borrar historial'},3000);return}
+    rides=[];store.set('rides',rides);toast('Historial borrado');render() }
+});
+document.addEventListener('change',e=>{
+  const t=e.target,id=t.id;
+  if(id==='gpsT'){cfg.gps=t.checked;saveCfg();toggleGPS(t.checked);render();return}
+  if(id in cfg){ cfg[id]= t.type==='checkbox'?t.checked : (t.type==='range'||t.type==='number')?+t.value : t.value; saveCfg();
+    if(id==='notify'&&t.checked&&'Notification' in window){try{Notification.requestPermission()}catch{}}
+    if(id.startsWith('alert'))S.alertsFired={}; render(); }
+});
+document.addEventListener('input',e=>{ if(e.target.type==='range'){const l=e.target.closest('label');const m=l&&l.querySelector('.mono');if(m)m.textContent=e.target.value+(m.dataset.u||'%')} });
+
+function exportCSV(){
+  const csv='fecha,km,minutos,vel_max_kmh,bateria_usada_pct,wh_km\n'+rides.map(r=>[new Date(r.date).toISOString(),r.km,r.min,r.max,r.used,r.wh].join(',')).join('\n');
+  try{const u=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));const a=document.createElement('a');a.href=u;a.download='jandri-salidas.csv';a.click();setTimeout(()=>URL.revokeObjectURL(u),2000)}catch{}
+  navigator.clipboard?.writeText(csv).then(()=>toast('CSV copiado al portapapeles (y descargado si el navegador lo permite)')).catch(()=>toast('Descarga iniciada'));
+}
+setInterval(()=>{if(route==='ride'&&S.link!=='off')paint()},1000);
+if('serviceWorker' in navigator && location.protocol==='https:' && !location.hostname.endsWith('claude.ai')){navigator.serviceWorker.register('sw.js').catch(()=>{})}
+try{ go() }catch(e){ showErr((e&&e.message)||String(e)) }
+
+}catch(e){ showErr('Arranque: '+((e&&e.message)||e)+(e&&e.line?' (línea '+e.line+')':'')+(e&&e.stack?'\n'+String(e.stack).split('\n').slice(0,3).join('\n'):'')) }
+</script>
+
+</body>
+</html>
