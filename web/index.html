@@ -244,6 +244,7 @@ const sU = ()=> isMi()?'mph':'km/h';
 
 /* ---------- utils ---------- */
 const $ = s=>document.querySelector(s);
+const isIOS = /iPhone|iPad|iPod/.test(navigator.userAgent) || (navigator.platform==='MacIntel' && navigator.maxTouchPoints>1);
 const inFrame = (()=>{try{return window.self!==window.top}catch{return true}})();
 const fmt = (v,d=0)=> v==null||isNaN(v)?'—':Number(v).toFixed(d);
 function toast(msg,kind=''){const t=$('#toast');t.className='toast '+kind;t.textContent=msg;t.hidden=false;clearTimeout(toast._t);toast._t=setTimeout(()=>t.hidden=true,3800)}
@@ -396,7 +397,7 @@ function md5(bytes){
 let dev=null, chars={}, keepAlive=null;
 async function connectBLE(){
   if(!navigator.bluetooth){
-    toast(inFrame?'Aquí el Bluetooth está bloqueado. Abre la app instalada o la web en Chrome.':'Este navegador no tiene Bluetooth web. Usa Chrome en Android o la app instalada.','warn');return;
+    toast(inFrame?'Aquí el Bluetooth está bloqueado. Abre la app instalada o la web en Chrome.':isIOS?'En iPhone, Safari y Chrome no tienen Bluetooth. Instala la app gratuita «Bluefy» de la App Store y abre esta web desde ella.':'Este navegador no tiene Bluetooth web. Usa Chrome en Android o la app instalada.','warn');return;
   }
   try{
     dev = await navigator.bluetooth.requestDevice({filters:[{services:[SVC]}],optionalServices:[SVC]});
@@ -599,6 +600,7 @@ function vHome(){
         <div class="range" id="range">${off?'Enciende la tabla, cierra la app oficial y pulsa Conectar':rl?`≈ <b>${fmt(dist(rl[2]),1)}</b> ${dU()} restantes<span class="rsrc">${rangeInfo}</span>`:'Leyendo voltaje…'}</div>
       </div>
     </div>
+    ${off&&!navigator.bluetooth&&isIOS?`<p class="note" style="text-align:center;max-width:34ch;margin:12px auto 0;color:var(--warn)">En iPhone hace falta la app gratuita <b>Bluefy</b> (App Store): ábrela y entra en esta misma dirección.</p>`:''}
     <div class="cta-row">
       ${off?`<button class="btn primary" data-act="connect">${ic('bt','width="16" height="16"')}Conectar tabla</button>
 `
