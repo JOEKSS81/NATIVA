@@ -42,7 +42,7 @@ jobs:
             echo "::warning::Faltan los secrets KS_B64/KS_PASS: se firma con una clave temporal."
             P=$(openssl rand -hex 16)
             echo "::add-mask::$P"
-            keytool -genkeypair -keystore "$RUNNER_TEMP/jandri.keystore" -alias jandri -keyalg RSA -keysize 2048 \
+            keytool -genkeypair -keystore "$RUNNER_TEMP/jandri.keystore" -alias volta -keyalg RSA -keysize 2048 \
               -validity 10000 -storepass "$P" -keypass "$P" -dname "CN=Jandri, C=ES"
             echo "KS_PASS=$P" >> "$GITHUB_ENV"
           fi
