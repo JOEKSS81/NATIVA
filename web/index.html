@@ -6,7 +6,7 @@
 <link rel="icon" href="icon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="icon-192.png">
 <style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
-<title>Volta Board</title>
+<title>Jandry</title>
 <meta name="theme-color" content="#06080c">
 <link rel="manifest" href="manifest.json">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -175,7 +175,7 @@ table.rep th:first-child,table.rep td:first-child{text-align:left}
 <body>
 <div class="wrap">
   <header>
-    <div class="logo"><i></i>Volta</div>
+    <div class="logo"><i></i>Jandry</div>
     <div class="conn"><span class="dot" id="dot"></span><span id="connTxt">Sin conexión</span></div>
   </header>
   <main id="app"></main>
@@ -186,7 +186,7 @@ table.rep th:first-child,table.rep td:first-child{text-align:left}
 
 <script>
 /* ============================================================
-   Volta Board · lectura BLE de tablas Onewheel (Web Bluetooth)
+   Jandry · lectura BLE de tablas Onewheel (Web Bluetooth)
    ============================================================ */
 const UUID = id => `e659${id}-ea98-11e3-ac10-0800200c9a66`;
 const SVC = UUID('f300');
@@ -214,8 +214,8 @@ const MODE_NAMES = {1:'Classic',2:'Extreme',3:'Elevated',4:'Sequoia',5:'Cruz',6:
 
 /* ---------- state ---------- */
 const store = {
-  get(k,d){try{const v=localStorage.getItem('volta.'+k);return v?JSON.parse(v):d}catch{return d}},
-  set(k,v){try{localStorage.setItem('volta.'+k,JSON.stringify(v))}catch{}}
+  get(k,d){try{const v=localStorage.getItem('jandry.'+k);return v?JSON.parse(v):d}catch{return d}},
+  set(k,v){try{localStorage.setItem('jandry.'+k,JSON.stringify(v))}catch{}}
 };
 const S = {
   link:'off',            // off | ble
@@ -455,8 +455,8 @@ async function unlockGemini(){
 function notify(body,tag){
   if(!cfg.notify||!('Notification' in window)||Notification.permission!=='granted') return;
   const opt={body,tag,icon:'icon-192.png',badge:'icon-192.png',renotify:true};
-  if(navigator.serviceWorker?.controller) navigator.serviceWorker.ready.then(r=>r.showNotification('Volta Board',opt)).catch(()=>{});
-  else { try{ new Notification('Volta Board',opt) }catch{} }
+  if(navigator.serviceWorker?.controller) navigator.serviceWorker.ready.then(r=>r.showNotification('Jandry',opt)).catch(()=>{});
+  else { try{ new Notification('Jandry',opt) }catch{} }
 }
 let manualOff=false;
 async function onDisconnect(){
@@ -935,7 +935,7 @@ document.addEventListener('input',e=>{ if(e.target.type==='range'){const l=e.tar
 
 function exportCSV(){
   const csv='fecha,km,minutos,vel_max_kmh,bateria_usada_pct,wh_km\n'+rides.map(r=>[new Date(r.date).toISOString(),r.km,r.min,r.max,r.used,r.wh].join(',')).join('\n');
-  try{const u=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));const a=document.createElement('a');a.href=u;a.download='volta-salidas.csv';a.click();setTimeout(()=>URL.revokeObjectURL(u),2000)}catch{}
+  try{const u=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));const a=document.createElement('a');a.href=u;a.download='jandry-salidas.csv';a.click();setTimeout(()=>URL.revokeObjectURL(u),2000)}catch{}
   navigator.clipboard?.writeText(csv).then(()=>toast('CSV copiado al portapapeles (y descargado si el navegador lo permite)')).catch(()=>toast('Descarga iniciada'));
 }
 setInterval(()=>{if(route==='ride'&&S.link!=='off')paint()},1000);

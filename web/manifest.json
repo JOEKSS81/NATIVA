@@ -1,6 +1,6 @@
 {
-  "name": "Volta Board",
-  "short_name": "Volta",
+  "name": "Jandry",
+  "short_name": "Jandry",
   "description": "Batería, avisos por voz y telemetría para Onewheel V1 y posteriores",
   "start_url": "./index.html",
   "scope": "./",
