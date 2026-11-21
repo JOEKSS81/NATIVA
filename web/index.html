@@ -185,6 +185,12 @@ table.rep th:first-child,table.rep td:first-child{text-align:left}
 <div class="toast" id="toast" hidden></div>
 
 <script>
+window.__APPV='1.0.5';
+window.addEventListener('error',function(e){showErr((e.message||'Error')+' · '+(e.filename||'').split('/').pop()+':'+(e.lineno||'?')+':'+(e.colno||'?'))});
+window.addEventListener('unhandledrejection',function(e){showErr('Promesa: '+((e.reason&&(e.reason.message||e.reason))||'?'))});
+function showErr(m){try{var d=document.getElementById('errbox');if(!d){d=document.createElement('div');d.id='errbox';d.style.cssText='position:fixed;left:12px;right:12px;bottom:110px;z-index:99;background:#2a0d12;color:#ffd7dc;border:1px solid #ff5d6c;border-radius:12px;padding:12px;font:12px/1.4 monospace;white-space:pre-wrap;word-break:break-word';document.body.appendChild(d)}d.textContent+='Error (v'+window.__APPV+'): '+m+'\n'}catch(_){}}
+</script>
+<script>
 /* ============================================================
    Jandri · lectura BLE de tablas Onewheel (Web Bluetooth)
    ============================================================ */
@@ -827,7 +833,7 @@ function vPrefs(){
       ${row('bolt','Firmware 4034–4xxx','Se desbloquea automáticamente al conectar','<span class="tag ok">Sí</span>')}
       ${row('bolt','Firmware 5xxx o superior','Pint/XR/GT recientes cifran la conexión con clave del fabricante','<span class="tag warn">Limitado</span>')}
     </div>
-    <p class="note" style="margin:12px 0 0">App independiente, sin relación con Future Motion. Úsala bajo tu responsabilidad y no mires el móvil mientras ruedas.</p>
+    <p class="note" style="margin:12px 0 0">Versión ${window.__APPV}. App independiente, sin relación con Future Motion. Úsala bajo tu responsabilidad y no mires el móvil mientras ruedas.</p>
   </section>
   <section class="panel">
     <h3>Datos</h3>
@@ -942,7 +948,7 @@ function exportCSV(){
 }
 setInterval(()=>{if(route==='ride'&&S.link!=='off')paint()},1000);
 if('serviceWorker' in navigator && location.protocol==='https:' && !location.hostname.endsWith('claude.ai')){navigator.serviceWorker.register('sw.js').catch(()=>{})}
-go();
+try{ go() }catch(e){ showErr((e&&e.message)||String(e)) }
 </script>
 
 </body>
