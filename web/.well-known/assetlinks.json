@@ -2,7 +2,7 @@
   "relation": ["delegate_permission/common.handle_all_urls"],
   "target": {
     "namespace": "android_app",
-    "package_name": "com.jandry.app",
+    "package_name": "com.jandri.app",
     "sha256_cert_fingerprints": ["34:A3:BB:F2:5A:09:67:CC:DC:D3:61:8C:E0:8A:9A:19:D5:AC:E9:0D:EB:1E:FD:72:E2:F0:2C:7F:81:59:74:14"]
   }
 }]

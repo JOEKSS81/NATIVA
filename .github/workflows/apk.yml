@@ -1,6 +1,6 @@
-# Compila el APK de Jandry (app Android que abre la web a pantalla completa)
+# Compila el APK de Jandri (app Android que abre la web a pantalla completa)
 # y lo publica en Releases. Descarga directa:
-#   https://github.com/<usuario>/<repo>/releases/latest/download/Jandry.apk
+#   https://github.com/<usuario>/<repo>/releases/latest/download/Jandri.apk
 #
 # Firma: usa los secrets del repo KS_B64 (clave en base64) y KS_PASS (contraseña).
 # Si no existen, firma con una clave temporal: funciona, pero cada versión habrá
@@ -38,31 +38,31 @@ jobs:
           KS_PASS: ${{ secrets.KS_PASS }}
         run: |
           if [ -n "$KS_B64" ] && [ -n "$KS_PASS" ]; then
-            echo "$KS_B64" | base64 -d > "$RUNNER_TEMP/jandry.keystore"
+            echo "$KS_B64" | base64 -d > "$RUNNER_TEMP/jandri.keystore"
             echo "KS_PASS=$KS_PASS" >> "$GITHUB_ENV"
           else
             echo "::warning::Faltan los secrets KS_B64/KS_PASS: se firma con una clave temporal."
             P=$(openssl rand -hex 16)
             echo "::add-mask::$P"
-            keytool -genkeypair -keystore "$RUNNER_TEMP/jandry.keystore" -alias jandry -keyalg RSA -keysize 2048 \
-              -validity 10000 -storepass "$P" -keypass "$P" -dname "CN=Jandry, C=ES"
+            keytool -genkeypair -keystore "$RUNNER_TEMP/jandri.keystore" -alias jandri -keyalg RSA -keysize 2048 \
+              -validity 10000 -storepass "$P" -keypass "$P" -dname "CN=Jandri, C=ES"
             echo "KS_PASS=$P" >> "$GITHUB_ENV"
           fi
-          echo "KS_PATH=$RUNNER_TEMP/jandry.keystore" >> "$GITHUB_ENV"
+          echo "KS_PATH=$RUNNER_TEMP/jandri.keystore" >> "$GITHUB_ENV"
 
       - name: Compila y firma
         run: |
           gradle -p android assembleRelease --no-daemon --stacktrace
-          cp android/app/build/outputs/apk/release/app-release.apk Jandry.apk
-          ls -lh Jandry.apk
+          cp android/app/build/outputs/apk/release/app-release.apk Jandri.apk
+          ls -lh Jandri.apk
 
       - name: Publica en Releases
         uses: softprops/action-gh-release@v2
         with:
           tag_name: v1.0.${{ github.run_number }}
-          name: Jandry 1.0.${{ github.run_number }}
+          name: Jandri 1.0.${{ github.run_number }}
           make_latest: true
-          files: Jandry.apk
+          files: Jandri.apk
           body: |
-            Instalar: descarga **Jandry.apk** con el móvil y ábrelo (permite instalar apps de origen desconocido).
+            Instalar: descarga **Jandri.apk** con el móvil y ábrelo (permite instalar apps de origen desconocido).
             Requiere Google Chrome instalado: la app usa su Bluetooth y su voz.

@@ -1,6 +1,6 @@
 {
-  "name": "Jandry",
-  "short_name": "Jandry",
+  "name": "Jandri",
+  "short_name": "Jandri",
   "description": "Batería, avisos por voz y telemetría para Onewheel V1 y posteriores",
   "start_url": "./index.html",
   "scope": "./",
