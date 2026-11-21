@@ -1,7 +1,7 @@
 plugins { id 'com.android.application' }
 
 // URL de la web (Vercel). Se puede cambiar con -PwebHost=otro.dominio
-def webHost = project.findProperty('webHost') ?: 'jandri.vercel.app'
+def webHost = project.findProperty('webHost') ?: 'jandri.netlify.app'
 def vCode = (System.getenv('GITHUB_RUN_NUMBER') ?: '1') as int
 
 android {
